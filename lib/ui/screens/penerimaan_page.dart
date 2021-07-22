@@ -1,3 +1,4 @@
+import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
@@ -9,8 +10,6 @@ import 'package:gudang_manager/repo/laporan_repository.dart';
 import 'package:gudang_manager/res/styling.dart';
 import 'package:gudang_manager/ui/widgets/primary_button.dart';
 import 'package:intl/intl.dart';
-import 'package:sweetalert/sweetalert.dart';
-
 class LandingPenerimaanPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -53,25 +52,25 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        brightness: Brightness.light,
-        elevation: 0,
-        backgroundColor: AppTheme.redBackgroundColor,
-        title: Container(
-          child: Row(
-            children: [
-              Text(
-                'Penerimaan',
-                style: Theme.of(context).primaryTextTheme.headline5,
-                textAlign: TextAlign.center,
-              ),
-            ],
+        appBar: AppBar(
+          brightness: Brightness.light,
+          elevation: 0,
+          backgroundColor: AppTheme.redBackgroundColor,
+          title: Container(
+            child: Row(
+              children: [
+                Text(
+                  'Penerimaan',
+                  style: Theme.of(context).primaryTextTheme.headline5,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      body: _pageBody()
-    );
+        body: _pageBody());
   }
+
   Widget _pageBody() {
     return BlocListener<LaporanBloc, LaporanState>(
       listener: (context, state) {
@@ -87,6 +86,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
           } else if (state is LaporanLoadingState) {
             return _buildLoading();
           } else if (state is LaporanLoadedState) {
+            print(state.laporans.length);
             return _buildPenerimaan(state.laporans);
           } else if (state is LaporanErrorState) {
             return _buildErrorUi(state.msg);
@@ -97,17 +97,27 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
       ),
     );
   }
+
   Widget _buildLoading() {
     return Center(
       child: CircularProgressIndicator(),
     );
   }
-  void _alertSuccess() {
-    SweetAlert.show(context,
-        title: "Success",
-        subtitle: "data loaded",
-        style: SweetAlertStyle.success);
+
+  void _alertSuccess(String msg) {
+    ArtSweetAlert.show(
+        context: context,
+        artDialogArgs:
+            ArtDialogArgs(type: ArtSweetAlertType.success, title: msg));
   }
+
+  void _alertError(String msg) {
+    ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.danger, title: "Oops...", text: msg));
+  }
+
   Widget _buildErrorUi(String message) {
     return Center(
       child: Padding(
@@ -119,6 +129,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
       ),
     );
   }
+
   Widget _buildPenerimaan(List<Penerimaan> penerimaans) {
     return SingleChildScrollView(
       physics: BouncingScrollPhysics(),
@@ -146,8 +157,8 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
       ),
     );
   }
-  Widget _dropDownSearch(){
 
+  Widget _dropDownSearch() {
     List<ItemModel> items = [
       ItemModel("01,12", "1 Tahun"),
       ItemModel("01,06", "Semester 1"),
@@ -155,12 +166,10 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
     ];
 
     List<ItemModel> itemsYear = [];
-    int date =  int.parse(DateFormat('yyyy').format(DateTime.now()));
-    for(int i = date; i > (date-10); i--){
+    int date = int.parse(DateFormat('yyyy').format(DateTime.now()));
+    for (int i = date; i > (date - 10); i--) {
       itemsYear.add(ItemModel(i.toString(), i.toString()));
     }
-
-
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -171,6 +180,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
       ],
     );
   }
+
   Widget _laporanItemList(List<Penerimaan> penerimaans) {
     if (penerimaans.length == 0) {
       return Center(
@@ -182,7 +192,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
         scrollDirection: Axis.horizontal,
         child: SingleChildScrollView(
           child: DataTable(
-              headingRowColor: MaterialStateColor.resolveWith((states) => Colors.grey),
+              // headingRowColor: MaterialStateColor.resolveWith((states) => Colors.red),
               columnSpacing: 10,
               columns: [
                 DataColumn(
@@ -256,7 +266,8 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
                   .toList()),
         ));
   }
-  Widget _dropDownItems(List<ItemModel> items, String msg, int index){
+
+  Widget _dropDownItems(List<ItemModel> items, String msg, int index) {
     return Container(
       decoration: BoxDecoration(
           border: Border.all(color: AppTheme.redBackgroundColor, width: 1),
@@ -272,18 +283,23 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
         }).toList(),
         onChanged: (value) {
           setState(() {
-              if (index == 0) _semester = value!;
-              else if (index == 1) _tahun = value!;
-              else if (index == 2) _spesifikasiId = value!;
+            if (index == 0)
+              _semester = value!;
+            else if (index == 1)
+              _tahun = value!;
+            else if (index == 2) _spesifikasiId = value!;
 
-            _bloc.add(FetchLaporanPenerimaanEvent(spesifikasiId: _spesifikasiId, semester: _semester, tahun: _tahun));
+            _bloc.add(FetchLaporanPenerimaanEvent(
+                spesifikasiId: _spesifikasiId,
+                semester: _semester,
+                tahun: _tahun));
           });
         },
       ),
     );
   }
 
-  Widget _pageKlasifikasiBody(){
+  Widget _pageKlasifikasiBody() {
     return BlocListener<KlasifikasiBloc, KlasifikasiState>(
       listener: (context, state) {
         if (state is KlasifikasiErrorState) {
@@ -293,8 +309,8 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
       child: BlocBuilder<KlasifikasiBloc, KlasifikasiState>(
         builder: (context, state) {
           print("state $state");
-          if(state is KLasifikasiLoadingState){
-           return _buildLoading();
+          if (state is KLasifikasiLoadingState) {
+            return _buildLoading();
           }
           if (state is KlasifikasiLoadedState) {
             // return _buildPenerimaan(state.laporans);
@@ -303,10 +319,10 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
             listKlasifikasi.clear();
             listKlasifikasi.add(ItemModel("", "Spesifikasi"));
             state.klasifikasis.forEach((element) {
-              listKlasifikasi.add(ItemModel(element.id.toString(), element.name));
+              listKlasifikasi
+                  .add(ItemModel(element.id.toString(), element.name));
             });
             return _dropDownItems(listKlasifikasi, "Spesifikasi", 2);
-
           } else if (state is KlasifikasiErrorState) {
             return _buildErrorUi(state.msg);
           } else {
@@ -317,6 +333,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
     );
   }
 }
+
 class OutLineBtn extends StatefulWidget {
   final String btnText;
 
@@ -325,6 +342,7 @@ class OutLineBtn extends StatefulWidget {
   @override
   _OutLineBtnState createState() => _OutLineBtnState();
 }
+
 class _OutLineBtnState extends State<OutLineBtn> {
   @override
   Widget build(BuildContext context) {
@@ -341,7 +359,8 @@ class _OutLineBtnState extends State<OutLineBtn> {
     );
   }
 }
-class ItemModel{
+
+class ItemModel {
   String id;
   String value;
   ItemModel(this.id, this.value);

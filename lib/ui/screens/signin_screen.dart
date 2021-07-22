@@ -1,3 +1,4 @@
+import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -8,7 +9,6 @@ import 'package:gudang_manager/res/images.dart';
 import 'package:gudang_manager/res/strings.dart';
 import 'package:gudang_manager/res/styling.dart';
 import 'package:gudang_manager/ui/screens/home_page.dart';
-import 'package:sweetalert/sweetalert.dart';
 
 class SignInScreen extends StatefulWidget {
   @override
@@ -56,7 +56,7 @@ class _SignInScreenState extends State<SignInScreen> {
           print("State ${state.user.responsecode}");
           // ignore: unrelated_type_equality_checks
           if (state.user.responsecode == "1") {
-            _alertSuccess();
+            _alertSuccess("Berhasil");
             _sharedInfo.sharedLoginInfo(state.user.user);
             gotoHomePage();
           } else {
@@ -147,20 +147,21 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _alertLoading() {
-    SweetAlert.show(context,
-        subtitle: "loading...", style: SweetAlertStyle.loading);
+    CircularProgressIndicator();
   }
 
-  void _alertSuccess() {
-    SweetAlert.show(context,
-        title: "Success",
-        subtitle: "Welcome, Enjoy it",
-        style: SweetAlertStyle.success);
+  void _alertSuccess(String msg) {
+    ArtSweetAlert.show(
+        context: context,
+        artDialogArgs:
+            ArtDialogArgs(type: ArtSweetAlertType.success, title: msg));
   }
 
   void _alertError(String msg) {
-    SweetAlert.show(context,
-        title: "Failed", subtitle: msg, style: SweetAlertStyle.error);
+    ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.danger, title: "Oops...", text: msg));
   }
 
   void gotoHomePage() {

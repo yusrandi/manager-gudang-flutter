@@ -6,6 +6,7 @@ import 'package:gudang_manager/res/images.dart';
 import 'package:gudang_manager/res/strings.dart';
 import 'package:gudang_manager/res/styling.dart';
 import 'package:gudang_manager/ui/screens/penerimaan_page.dart';
+import 'package:gudang_manager/ui/screens/pengeluaran_page.dart';
 
 class LandingHomePage extends StatelessWidget {
   @override
@@ -106,8 +107,8 @@ class _HomePageState extends State<HomePage> {
               child: Stack(
                 children: [
                   Positioned(
-                      top: -50,
-                      left: -50,
+                      top: 0,
+                      left: 0,
                       child: Container(
                         height: 120,
                         width: 120,
@@ -116,8 +117,8 @@ class _HomePageState extends State<HomePage> {
                             color: Color(sliders[index].topbackground)),
                       )),
                   Positioned(
-                      right: -50,
-                      bottom: -50,
+                      right: 0,
+                      bottom: 0,
                       child: Container(
                         height: 200,
                         width: 200,
@@ -146,12 +147,12 @@ class _HomePageState extends State<HomePage> {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap: () {
-                  gotoAnotherPage(1);
-                },
-                child: Expanded(
-                    flex: 1,
+              Expanded(
+                  flex: 1,
+                  child: GestureDetector(
+                    onTap: () {
+                      gotoAnotherPage(LandingPenerimaanPage());
+                    },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -164,22 +165,27 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.black45),
                         ),
                       ],
-                    )),
-              ),
+                    ),
+                  )),
               Expanded(
                   flex: 1,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(Images.ic_pengeluaran, height: 35),
-                      Text(
-                        'Pengeluaran',
-                        style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black45),
-                      ),
-                    ],
+                  child: GestureDetector(
+                    onTap: () {
+                      gotoAnotherPage(PengeluaranLandingPage());
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(Images.ic_pengeluaran, height: 35),
+                        Text(
+                          'Pengeluaran',
+                          style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black45),
+                        ),
+                      ],
+                    ),
                   )),
               Expanded(
                   flex: 1,
@@ -214,19 +220,14 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           SizedBox(height: 26),
-          
         ],
       ),
     );
   }
 
-  void gotoAnotherPage(int index) {
+  void gotoAnotherPage(Widget widget) {
     Navigator.push(context, MaterialPageRoute(builder: (context) {
-      if (index == 1) {
-        return LandingPenerimaanPage();
-      } else {
-        return LandingHomePage();
-      }
+      return widget;
     }));
   }
 }
