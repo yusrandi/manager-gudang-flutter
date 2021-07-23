@@ -14,7 +14,7 @@ class BagianRepositoryImpl implements BagianRepository {
   @override
   Future<BagianModel> getBagian() async {
     var _response = await http.get(Uri.parse(Api.instance.bagianURL));
-    print(_response.statusCode);
+    print(TAG+" "+_response.statusCode.toString());
     if (_response.statusCode == 201) {
       // print("$TAG getBagian true ");
       var data = json.decode(_response.body);

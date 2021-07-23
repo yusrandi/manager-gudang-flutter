@@ -7,7 +7,9 @@ import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
 import 'package:gudang_manager/models/bagian.dart';
 import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/models/pengeluaran.dart';
+import 'package:gudang_manager/pdfapi/pdf_api.dart';
 import 'package:gudang_manager/pdfapi/pdf_invoice_api.dart';
+import 'package:gudang_manager/pdfapi/pdf_invoice_api_pengeluaran.dart';
 import 'package:gudang_manager/repo/bagian_repository.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
 import 'package:gudang_manager/res/styling.dart';
@@ -46,6 +48,7 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
 
   List<ItemModel> listKlasifikasi = [];
   List<ItemModel> listBagian = [];
+  List<Pengeluaran> pengeluarans = [];
 
   String _semesterDropdownValue = "Priode";
   String _tahunDropdownValue = "Tahun";
@@ -106,7 +109,11 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
             Container(
                 width: MediaQuery.of(context).size.width / 3,
                 child: GestureDetector(
-                    onTap: () async {},
+                    onTap: () async {
+                      final pdfFile =
+                          await PdfInvoiceApiPengeluaran.generate(pengeluarans);
+                      PdfApi.openFile(pdfFile);
+                    },
                     child: PrimaryButton(
                         btnText: "Export",
                         color: AppTheme.blueBackgroundColor))),
@@ -134,6 +141,7 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
             return _buildLoading();
           } else if (state is LaporanLoadedStatePengeluaran) {
             print(state.laporans.length);
+            pengeluarans = state.laporans;
             return _buildPengeluaran(state.laporans);
           } else if (state is LaporanErrorState) {
             return _buildErrorUi(state.msg);
@@ -305,6 +313,7 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
             List<ItemModel> list = [];
             list.add(ItemModel("Bagian", "Bagian"));
             state.bagians.forEach((element) {
+              print(element.name);
               list.add(ItemModel(element.id.toString(), element.name));
             });
             return _dropDownItemBagian(list);
@@ -367,7 +376,7 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
           );
         }).toList(),
         onChanged: (newValue) {
-          _tahun = newValue! == "Tahun" ?  "" : newValue;
+          _tahun = newValue! == "Tahun" ? "" : newValue;
 
           _bloc.add(FetchLaporanPengeluaranEvent(
               spesifikasiId: _spesifikasiId,

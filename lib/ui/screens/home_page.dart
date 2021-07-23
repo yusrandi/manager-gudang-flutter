@@ -5,6 +5,8 @@ import 'package:gudang_manager/models/SliderModel.dart';
 import 'package:gudang_manager/res/images.dart';
 import 'package:gudang_manager/res/strings.dart';
 import 'package:gudang_manager/res/styling.dart';
+import 'package:gudang_manager/ui/screens/pb22_page.dart';
+import 'package:gudang_manager/ui/screens/pb23_page.dart';
 import 'package:gudang_manager/ui/screens/penerimaan_page.dart';
 import 'package:gudang_manager/ui/screens/pengeluaran_page.dart';
 
@@ -99,32 +101,44 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (context, index) {
             return Container(
               margin: EdgeInsets.only(right: 6),
-              height: 150,
-              width: 340,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: Color(sliders[index].background)),
+              width: 300,
               child: Stack(
                 children: [
                   Positioned(
-                      top: 0,
+                      bottom: 20,
                       left: 0,
+                      right: 0,
+                      top: 0,
                       child: Container(
-                        height: 120,
-                        width: 120,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(100),
-                            color: Color(sliders[index].topbackground)),
+                            borderRadius: BorderRadius.circular(25),
+                            color: Colors.red[300]),
                       )),
                   Positioned(
-                      right: 0,
                       bottom: 0,
+                      left: 10,
+                      right: 10,
                       child: Container(
-                        height: 200,
-                        width: 200,
+                        height: 150,
+                        width: 300,
                         decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(100),
-                            color: Color(sliders[index].botbackground)),
+                            borderRadius: BorderRadius.circular(25),
+                            gradient: LinearGradient(colors: [
+                              Colors.red,
+                              Colors.blue,
+                            ])),
+                        child: Center(
+                            child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Total",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 16)),
+                            Text("Rp. 1.000.000",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 30))
+                          ],
+                        )),
                       )),
                   Positioned(
                     left: 16,
@@ -189,34 +203,45 @@ class _HomePageState extends State<HomePage> {
                   )),
               Expanded(
                   flex: 1,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(Images.ic_penerimaan, height: 35),
-                      Text(
-                        'Laporan',
-                        style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black45),
-                      ),
-                    ],
+                  child: GestureDetector(
+                    onTap: () {
+                      gotoAnotherPage(Pb22LandingPage());
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(Images.ic_penerimaan, height: 35),
+                        Text(
+                          'KPB B.22',
+                          style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black45),
+                        ),
+                      ],
+                    ),
                   )),
               Expanded(
                   flex: 1,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(Images.ic_rekapitulasi, height: 35),
-                      Text(
-                        'Rekapitulasi',
-                        style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black45),
-                      ),
-                    ],
+                  child: GestureDetector(
+                    onTap: () {
+                      gotoAnotherPage(Pb23LandingPage());
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(Images.ic_penerimaan, height: 35),
+                        Text(
+                          'KPB B.23',
+                          style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black45),
+                        ),
+                      ],
+                    ),
                   )),
+              
             ],
           ),
           SizedBox(height: 26),
