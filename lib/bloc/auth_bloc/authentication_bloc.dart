@@ -28,7 +28,6 @@ class AuthenticationBloc
       try {
         yield AuthLoadingState();
         await Future.delayed(const Duration(milliseconds: 30));
-        var url = Api.instance.loginURL;
         final data = await repository.getLogin(event.email, event.password);
         yield AuthGetSuccess(user: data);
       } catch (e) {

@@ -4,6 +4,7 @@ import 'package:gudang_manager/models/pb22_model.dart';
 import 'package:gudang_manager/models/pb23_model.dart';
 import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/models/pengeluaran.dart';
+import 'package:gudang_manager/models/rekapitulasi_model.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
 
 class LaporanBloc extends Bloc<LaporanEvent, LaporanState> {
@@ -46,6 +47,15 @@ class LaporanBloc extends Bloc<LaporanEvent, LaporanState> {
         var data = await repository.getPb23(
             event.spesifikasiId, event.tahun);
         yield LaporanLoadedStatePb23(data.pb23);
+      } catch (e) {
+        yield LaporanErrorState(e.toString());
+      }
+    }else if (event is FetchLaporanEventRekapitulasi) {
+        yield LaporanLoadingState();
+      try {
+        var data = await repository.getRekapitulasi(
+            event.spesifikasiId, event.tahun);
+        yield LaporanLoadedStateRekapitulasi(data.rekapitulasi);
       } catch (e) {
         yield LaporanErrorState(e.toString());
       }
@@ -101,6 +111,15 @@ class FetchLaporanEventPb23 extends LaporanEvent {
   @override
   List<Object> get props => [];
 }
+class FetchLaporanEventRekapitulasi extends LaporanEvent {
+  final String spesifikasiId;
+  final String tahun;
+  FetchLaporanEventRekapitulasi(
+      {required this.spesifikasiId,
+      required this.tahun});
+  @override
+  List<Object> get props => [];
+}
 
 
 
@@ -127,7 +146,7 @@ class LaporanLoadedState extends LaporanState {
 }
 
 class LaporanLoadedStatePengeluaran extends LaporanState {
-  List<Pengeluaran> laporans;
+  final List<Pengeluaran> laporans;
   LaporanLoadedStatePengeluaran(this.laporans);
 
   @override
@@ -135,15 +154,22 @@ class LaporanLoadedStatePengeluaran extends LaporanState {
 }
 
 class LaporanLoadedStatePb22 extends LaporanState {
-  List<Pb22> laporans;
+  final List<Pb22> laporans;
   LaporanLoadedStatePb22(this.laporans);
 
   @override
   List<Object> get props => [];
 }
 class LaporanLoadedStatePb23 extends LaporanState {
-  List<Pb23> laporans;
+  final List<Pb23> laporans;
   LaporanLoadedStatePb23(this.laporans);
+
+  @override
+  List<Object> get props => [];
+}
+class LaporanLoadedStateRekapitulasi extends LaporanState {
+  final List<Rekapitulasi> laporans;
+  LaporanLoadedStateRekapitulasi(this.laporans);
 
   @override
   List<Object> get props => [];

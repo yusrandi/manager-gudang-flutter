@@ -9,6 +9,7 @@ import 'package:gudang_manager/ui/screens/pb22_page.dart';
 import 'package:gudang_manager/ui/screens/pb23_page.dart';
 import 'package:gudang_manager/ui/screens/penerimaan_page.dart';
 import 'package:gudang_manager/ui/screens/pengeluaran_page.dart';
+import 'package:gudang_manager/ui/screens/rekapitulasi_page.dart';
 
 class LandingHomePage extends StatelessWidget {
   @override
@@ -245,6 +246,40 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           SizedBox(height: 26),
+          Row(
+            children: [
+              Expanded(
+                  flex: 1,
+                  child: GestureDetector(
+                    onTap: () {
+                      gotoAnotherPage(RekapitulasiLandingPage());
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(Images.ic_rekapitulasi, height: 35),
+                        Text(
+                          'Rekapitulasi',
+                          style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black45),
+                        ),
+                      ],
+                    ),
+                  )),
+              Expanded(
+                  flex: 1,
+                  child: Container()),
+              Expanded(
+                  flex: 1,
+                  child: Container()),
+              Expanded(
+                  flex: 1,
+                  child: Container()),
+              
+            ],
+          ),
         ],
       ),
     );

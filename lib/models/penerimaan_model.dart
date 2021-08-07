@@ -42,10 +42,9 @@ class Penerimaan {
   String barangQty = "";
   String barangSisa = "";
   int satuanId = 0;
-  late Barang barang;
-  late Klasifikasi rekanan;
-  late Klasifikasi satuan;
-
+  Barang? barang;
+  Klasifikasi? rekanan;
+  Klasifikasi? satuan;
   Penerimaan(
       {required this.id,
       required this.rekananId,
@@ -60,9 +59,9 @@ class Penerimaan {
       required this.barangQty,
       required this.barangSisa,
       required this.satuanId,
-      required this.barang,
-      required this.rekanan,
-      required this.satuan});
+      this.barang,
+      this.rekanan,
+      this.satuan});
 
   Penerimaan.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -99,13 +98,13 @@ class Penerimaan {
     data['barang_sisa'] = this.barangSisa;
     data['satuan_id'] = this.satuanId;
     if (this.barang != null) {
-      data['barang'] = this.barang.toJson();
+      data['barang'] = this.barang!.toJson();
     }
     if (this.rekanan != null) {
-      data['rekanan'] = this.rekanan.toJson();
+      data['rekanan'] = this.rekanan!.toJson();
     }
     if (this.satuan != null) {
-      data['satuan'] = this.satuan.toJson();
+      data['satuan'] = this.satuan!.toJson();
     }
     return data;
   }
@@ -115,7 +114,7 @@ class Barang {
   int id = 0;
   int klasifikasiId = 0;
   String name = "";
-  late Klasifikasi klasifikasi;
+  Klasifikasi? klasifikasi;
 
   Barang(
       {required this.id,
@@ -136,7 +135,7 @@ class Barang {
     data['klasifikasi_id'] = this.klasifikasiId;
     data['name'] = this.name;
     if (this.klasifikasi != null) {
-      data['klasifikasi'] = this.klasifikasi.toJson();
+      data['klasifikasi'] = this.klasifikasi!.toJson();
     }
     return data;
   }

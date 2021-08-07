@@ -3,7 +3,7 @@ import 'package:gudang_manager/models/penerimaan_model.dart';
 class KlasifikasiModel {
   String responsecode = "";
   String responsemsg = "";
-  late List<Klasifikasi> klasifikasi = [];
+  List<Klasifikasi> klasifikasi = [];
 
   KlasifikasiModel({required this.responsecode, required this.responsemsg, required this.klasifikasi});
 

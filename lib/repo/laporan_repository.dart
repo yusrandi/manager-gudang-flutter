@@ -6,6 +6,7 @@ import 'package:gudang_manager/models/pb22_model.dart';
 import 'package:gudang_manager/models/pb23_model.dart';
 import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/models/pengeluaran_model.dart';
+import 'package:gudang_manager/models/rekapitulasi_model.dart';
 import 'package:http/http.dart' as http;
 
 abstract class LaporanRepository {
@@ -30,6 +31,10 @@ abstract class LaporanRepository {
     String spesifikasiId,
     String tahun,
   );
+  Future<RekapitulasiModel> getRekapitulasi(
+    String spesifikasiId,
+    String tahun,
+  );
 
 
   Future<KlasifikasiModel> getKlasifikasi();
@@ -37,7 +42,7 @@ abstract class LaporanRepository {
 }
 
 class LaporanRepositoryImpl implements LaporanRepository {
-  final TAG = "LaporanRepositoryImpl";
+  static const TAG = "LaporanRepositoryImpl";
 
   @override
   Future<PenerimaanModel> getPenerimaan(String spesifikasiId, String semester, String tahun) async {
@@ -76,7 +81,7 @@ class LaporanRepositoryImpl implements LaporanRepository {
   @override
   Future<PengeluaranModel> getPengeluaran(String spesifikasiId, String bagianId, String semester, String tahun) async{
     var _response = await http.post(Uri.parse(Api.instance.pengeluaranURL), body: {"spesifikasi_id": spesifikasiId, "bagian_id": bagianId, "semester": semester, "tahun": tahun});
-    print(TAG+" "+_response.statusCode.toString());
+    print(TAG+" getPengeluaran : "+_response.statusCode.toString());
     if (_response.statusCode == 200) {
       // print("$TAG getLogin true ");
       var data = json.decode(_response.body);
@@ -114,6 +119,22 @@ class LaporanRepositoryImpl implements LaporanRepository {
       var data = json.decode(_response.body);
       // print("Data $data");
       Pb23Model model = Pb23Model.fromJson(data);
+      return model;
+    } else {
+      // print("$TAG getLogin else");
+      throw Exception();
+    }
+  }
+
+  @override
+  Future<RekapitulasiModel> getRekapitulasi(String spesifikasiId, String tahun) async{
+    var _response = await http.post(Uri.parse(Api.instance.rekapitulasiURL), body: {"klasifikasi_id": spesifikasiId, "filterTahun": tahun});
+    // print(TAG+" getPb22 "+_response.statusCode.toString());
+    if (_response.statusCode == 200) {
+      // print("$TAG getLogin true ");
+      var data = json.decode(_response.body);
+      // print("Data $data");
+      RekapitulasiModel model = RekapitulasiModel.fromJson(data);
       return model;
     } else {
       // print("$TAG getLogin else");

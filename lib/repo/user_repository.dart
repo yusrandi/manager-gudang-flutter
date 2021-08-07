@@ -11,7 +11,7 @@ abstract class UserRepository {
 }
 
 class UserRepositoryImpl implements UserRepository {
-  final TAG = "UserRepositoryImpl";
+  static const TAG = "UserRepositoryImpl";
   @override
   Future<UserModel> getLogin(String email, String password) async {
     var _response = await http.post(Uri.parse(Api.instance.loginURL), body: {"email": email, "password": password});

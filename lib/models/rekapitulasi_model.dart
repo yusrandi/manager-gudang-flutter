@@ -1,18 +1,20 @@
+
+
 import 'package:gudang_manager/models/penerimaan_model.dart';
 
-class Pb22Model {
+class RekapitulasiModel {
   String responsecode = "";
   String responsemsg = "";
-  List<Pb22> pb22 = [];
+  List<Rekapitulasi> rekapitulasi = [];
 
-  Pb22Model({required this.responsecode, required this.responsemsg, required this.pb22});
+  RekapitulasiModel({required this.responsecode, required this.responsemsg, required this.rekapitulasi});
 
-  Pb22Model.fromJson(Map<String, dynamic> json) {
+  RekapitulasiModel.fromJson(Map<String, dynamic> json) {
     responsecode = json['responsecode'];
     responsemsg = json['responsemsg'];
-    if (json['pb22'] != null) {
-      json['pb22'].forEach((v) {
-        pb22.add(new Pb22.fromJson(v));
+    if (json['rekapitulasi'] != null) {
+      json['rekapitulasi'].forEach((v) {
+        rekapitulasi.add(new Rekapitulasi.fromJson(v));
       });
     }
   }
@@ -21,14 +23,14 @@ class Pb22Model {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['responsecode'] = this.responsecode;
     data['responsemsg'] = this.responsemsg;
-    if (this.pb22 != null) {
-      data['pb22'] = this.pb22.map((v) => v.toJson()).toList();
+    if (this.rekapitulasi != null) {
+      data['rekapitulasi'] = this.rekapitulasi.map((v) => v.toJson()).toList();
     }
     return data;
   }
 }
 
-class Pb22 {
+class Rekapitulasi {
   int id = 0;
   int penerimaanId = 0;
   int pengeluaranId = 0;
@@ -39,7 +41,7 @@ class Pb22 {
   String date = "";
   Penerimaan? penerimaan;
 
-  Pb22(
+  Rekapitulasi(
       {required this.id,
       required this.penerimaanId,
       required this.pengeluaranId,
@@ -50,7 +52,7 @@ class Pb22 {
       required this.date,
       this.penerimaan});
 
-  Pb22.fromJson(Map<String, dynamic> json) {
+  Rekapitulasi.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     penerimaanId = json['penerimaan_id'];
     pengeluaranId = json['pengeluaran_id'];

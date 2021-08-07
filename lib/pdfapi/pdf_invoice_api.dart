@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/pdfapi/pdf_api.dart';
 import 'package:intl/intl.dart';
@@ -78,12 +77,12 @@ class PdfInvoiceApi {
     final data = penerimaans.map((e){
 
      return [
-       e.barang.name,
+       e.barang!.name,
        e.spkDate,
        e.spkNo,
        e.spmDate == null ? "" : "",
        e.spmNo == null ? "" : "",
-       e.barangQty+' '+e.satuan.name,
+       e.barangQty+' '+e.satuan!.name,
        "Rp. " +
            NumberFormat("#,##0", "en_US")
                .format(

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:gudang_manager/constant/constant.dart';
 
 class SliderModel {
   String title;

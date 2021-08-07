@@ -9,7 +9,7 @@ abstract class BagianRepository {
 }
 
 class BagianRepositoryImpl implements BagianRepository {
-  final TAG = "BagianRepositoryImpl";
+  static const TAG = "BagianRepositoryImpl";
 
   @override
   Future<BagianModel> getBagian() async {

@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:gudang_manager/res/styling.dart';
 
 class PrimaryButton extends StatefulWidget {
   final String btnText;

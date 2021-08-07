@@ -1,6 +1,4 @@
-import 'package:gudang_manager/models/penerimaan.dart';
-
-import 'klasifikasi.dart';
+import 'package:gudang_manager/models/penerimaan_model.dart';
 
 class Pengeluaran {
   int id = 0;

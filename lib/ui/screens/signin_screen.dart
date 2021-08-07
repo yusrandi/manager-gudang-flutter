@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:gudang_manager/bloc/auth_bloc/authentication_bloc.dart';
 import 'package:gudang_manager/config/shared_info.dart';
-import 'package:gudang_manager/constant/constant.dart';
 import 'package:gudang_manager/res/images.dart';
 import 'package:gudang_manager/res/strings.dart';
 import 'package:gudang_manager/res/styling.dart';
@@ -147,7 +146,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _alertLoading() {
-    CircularProgressIndicator();
+    Center(child: CircularProgressIndicator());
   }
 
   void _alertSuccess(String msg) {

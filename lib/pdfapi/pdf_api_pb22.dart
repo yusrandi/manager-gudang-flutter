@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:gudang_manager/models/pb22_model.dart';
 import 'package:gudang_manager/pdfapi/pdf_api.dart';
-import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 

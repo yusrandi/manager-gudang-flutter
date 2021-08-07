@@ -2,34 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
 import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
-import 'package:gudang_manager/models/pb22_model.dart';
-import 'package:gudang_manager/pdfapi/pdf_api.dart';
-import 'package:gudang_manager/pdfapi/pdf_api_pb22.dart';
+import 'package:gudang_manager/models/rekapitulasi_model.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
 import 'package:gudang_manager/res/styling.dart';
 import 'package:gudang_manager/ui/screens/penerimaan_page.dart';
 import 'package:gudang_manager/ui/widgets/primary_button.dart';
 import 'package:intl/intl.dart';
+import "package:collection/collection.dart";
 
-class Pb22LandingPage extends StatelessWidget {
+class RekapitulasiLandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => LaporanBloc(LaporanRepositoryImpl()),
       child: BlocProvider(
         create: (context) => KlasifikasiBloc(LaporanRepositoryImpl()),
-        child: Pb22Page(),
+        child: RekapitulasiPage(),
       ),
     );
   }
 }
 
-class Pb22Page extends StatefulWidget {
+class RekapitulasiPage extends StatefulWidget {
   @override
-  _Pb22PageState createState() => _Pb22PageState();
+  _RekapitulasiPage createState() => _RekapitulasiPage();
 }
 
-class _Pb22PageState extends State<Pb22Page> {
+class _RekapitulasiPage extends State<RekapitulasiPage> {
   late LaporanBloc _bloc;
   late KlasifikasiBloc _klasifikasiBloc;
 
@@ -40,7 +39,8 @@ class _Pb22PageState extends State<Pb22Page> {
   String _spesifikasiDropdownValue = "Spesifikasi";
 
   List<ItemModel> listKlasifikasi = [];
-  List<Pb22> list = [];
+  List<Rekapitulasi> list = [];
+  List<ItemRekap> listRekap = [];
 
   @override
   void initState() {
@@ -48,8 +48,8 @@ class _Pb22PageState extends State<Pb22Page> {
 
     _bloc = BlocProvider.of<LaporanBloc>(context);
     _klasifikasiBloc = BlocProvider.of<KlasifikasiBloc>(context);
-    _bloc.add(
-        FetchLaporanEventPb22(spesifikasiId: _spesifikasiId, tahun: _tahun));
+    _bloc.add(FetchLaporanEventRekapitulasi(
+        spesifikasiId: _spesifikasiId, tahun: _tahun));
 
     _klasifikasiBloc.add(FetchKlasifikasiEvent());
   }
@@ -65,7 +65,7 @@ class _Pb22PageState extends State<Pb22Page> {
             child: Row(
               children: [
                 Text(
-                  'Persediaan Barang B.22',
+                  'Rekapitulasi',
                   style: Theme.of(context).primaryTextTheme.headline5,
                   textAlign: TextAlign.center,
                 ),
@@ -88,8 +88,8 @@ class _Pb22PageState extends State<Pb22Page> {
                 width: MediaQuery.of(context).size.width / 3,
                 child: GestureDetector(
                     onTap: () async {
-                      final pdfFile = await PdfApiPb22.generate(list);
-                      PdfApi.openFile(pdfFile);
+                      // final pdfFile = await PdfApiRekapitulasi.generate(list);
+                      // PdfApi.openFile(pdfFile);
                     },
                     child: PrimaryButton(
                         btnText: "Export",
@@ -112,7 +112,8 @@ class _Pb22PageState extends State<Pb22Page> {
     return BlocListener<LaporanBloc, LaporanState>(
       listener: (context, state) {
         if (state is LaporanErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<LaporanBloc, LaporanState>(
@@ -120,9 +121,9 @@ class _Pb22PageState extends State<Pb22Page> {
           // print("_loadPengeluaran state $state");
           if (state is LaporanInitialState || state is LaporanLoadingState) {
             return _buildLoading();
-          } else if (state is LaporanLoadedStatePb22) {
+          } else if (state is LaporanLoadedStateRekapitulasi) {
             list = state.laporans;
-            return _buildLaporan(state.laporans);
+            return groupRekapByPenerimaanId(state.laporans);
           } else if (state is LaporanErrorState) {
             return _buildErrorUi(state.msg);
           } else {
@@ -133,71 +134,12 @@ class _Pb22PageState extends State<Pb22Page> {
     );
   }
 
-  Widget _buildLaporan(List<Pb22> list) {
-    if (list.length == 0) {
-      return Center(
-        child: Text("Laporan not Found"),
-      );
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        child: DataTable(
-            columnSpacing: 10,
-            columns: [
-              DataColumn(
-                  label:
-                      Text("NO", style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Tanggal",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Jenis Barang",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Barang Masuk",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Barang Keluar",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Sisa",
-                      style: Theme.of(context).textTheme.subtitle1)),
-            ],
-            rows: list
-                .map(
-                  (e) => DataRow(cells: [
-                    DataCell(Text((list.indexOf(e) + 1).toString(),
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.date,
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.penerimaan!.barang!.name,
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(
-                        e.status == 1
-                            ? e.qty + ' ' + e.penerimaan!.satuan!.name
-                            : '0',
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(
-                        e.status == 1
-                            ? '0'
-                            : e.qty + ' ' + e.penerimaan!.satuan!.name,
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.sisa + ' ' + e.penerimaan!.satuan!.name,
-                        style: Theme.of(context).textTheme.caption)),
-                  ]),
-                )
-                .toList()),
-      ),
-    );
-  }
-
   Widget _loadSpesifikasi() {
     return BlocListener<KlasifikasiBloc, KlasifikasiState>(
       listener: (context, state) {
         if (state is KlasifikasiErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<KlasifikasiBloc, KlasifikasiState>(
@@ -248,7 +190,7 @@ class _Pb22PageState extends State<Pb22Page> {
             _spesifikasiId = newValue == "Spesifikasi" ? "" : newValue;
           });
 
-          _bloc.add(FetchLaporanEventPb22(
+          _bloc.add(FetchLaporanEventRekapitulasi(
               spesifikasiId: _spesifikasiId, tahun: _tahun));
         },
       ),
@@ -295,7 +237,7 @@ class _Pb22PageState extends State<Pb22Page> {
         onChanged: (newValue) {
           _tahun = newValue! == "Tahun" ? "" : newValue;
 
-          _bloc.add(FetchLaporanEventPb22(
+          _bloc.add(FetchLaporanEventRekapitulasi(
               spesifikasiId: _spesifikasiId, tahun: _tahun));
 
           setState(() {
@@ -324,4 +266,142 @@ class _Pb22PageState extends State<Pb22Page> {
       ),
     );
   }
+
+  Widget groupRekapByPenerimaanId(List<Rekapitulasi> rekaps) {
+    listRekap.clear();
+    final groups = groupBy(rekaps, (Rekapitulasi e) {
+      return e.penerimaanId;
+    });
+
+    groups.forEach((key, value) {
+      String namaBarang = "";
+      String satuan = "";
+      int qtyPen = 0;
+      int qtyPeng = 0;
+      int price = 0;
+      value.forEach((element) {
+        namaBarang = element.penerimaan!.barang!.name;
+        element.status == 1
+            ? qtyPen += int.parse(element.penerimaan!.barangQty)
+            : qtyPeng += int.parse(element.qty);
+        price = int.parse(element.penerimaan!.barangPrice);
+        satuan = element.penerimaan!.satuan!.name;
+      });
+      print(
+          "key $key , nama $namaBarang, qtyPen $qtyPen, Qty Peng $qtyPeng, price $price");
+      listRekap.add(ItemRekap(
+          key: key,
+          namaBarang: namaBarang,
+          satuan: satuan,
+          qtyPen: qtyPen,
+          qtyPeng: qtyPeng,
+          price: price));
+    });
+
+    if (listRekap.length == 0) {
+      return Center(
+        child: Text("Laporan not Found"),
+      );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+            columnSpacing: 16,
+            columns: [
+              DataColumn(
+                  label:
+                      Text("NO", style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Jenis Barang",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Pen Jumlah",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Pen Harga",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Pen Total",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Peng Jumlah",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Peng Harga",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Peng Total",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Stok Jumlah",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Peng Harga",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Peng Total",
+                      style: Theme.of(context).textTheme.subtitle1)),
+            ],
+            rows: listRekap
+                .map(
+                  (e) => DataRow(cells: [
+                    DataCell(Text(e.key.toString(),
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text(e.namaBarang,
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text(e.qtyPen.toString()+' '+e.satuan,
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text("Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(e.price),
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text("Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(e.price * e.qtyPen),
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text(e.qtyPeng.toString()+' '+e.satuan,
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text("Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(e.price),
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text("Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(e.price * e.qtyPeng),
+                        style: Theme.of(context).textTheme.caption)),
+
+                    DataCell(Text((e.qtyPen - e.qtyPeng).toString()+' '+e.satuan,
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text("Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(e.price),
+                        style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text("Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(e.price * (e.qtyPen - e.qtyPeng)),
+                        style: Theme.of(context).textTheme.caption)),
+                  ]),
+                )
+                .toList()),
+      ),
+    );
+  }
+}
+
+class ItemRekap {
+  int key;
+  String namaBarang;
+  String satuan;
+  int qtyPen;
+  int qtyPeng;
+  int price;
+
+  ItemRekap(
+      {required this.key,
+      required this.namaBarang,
+      required this.satuan,
+      required this.qtyPen,
+      required this.qtyPeng,
+      required this.price});
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
 import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
 import 'package:gudang_manager/models/pb23_model.dart';
+import 'package:gudang_manager/models/rekapitulasi_model.dart';
 import 'package:gudang_manager/pdfapi/pdf_api.dart';
 import 'package:gudang_manager/pdfapi/pdf_api_Pb23.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
@@ -112,7 +113,8 @@ class _Pb23PageState extends State<Pb23Page> {
     return BlocListener<LaporanBloc, LaporanState>(
       listener: (context, state) {
         if (state is LaporanErrorState) {
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<LaporanBloc, LaporanState>(
@@ -122,6 +124,7 @@ class _Pb23PageState extends State<Pb23Page> {
             return _buildLoading();
           } else if (state is LaporanLoadedStatePb23) {
             list = state.laporans;
+
             return _buildLaporan(state.laporans);
           } else if (state is LaporanErrorState) {
             return _buildErrorUi(state.msg);
@@ -167,16 +170,13 @@ class _Pb23PageState extends State<Pb23Page> {
               DataColumn(
                   label: Text("Harga Satuan",
                       style: Theme.of(context).textTheme.subtitle1)),
-
               DataColumn(
                   label: Text("Bertambah",
                       style: Theme.of(context).textTheme.subtitle1)),
-
               DataColumn(
                   label: Text("Berkurang",
                       style: Theme.of(context).textTheme.subtitle1)),
             ],
-            
             rows: list
                 .map(
                   (e) => DataRow(cells: [
@@ -199,27 +199,30 @@ class _Pb23PageState extends State<Pb23Page> {
                     DataCell(Text(e.sisa + ' ' + e.penerimaan!.satuan!.name,
                         style: Theme.of(context).textTheme.caption)),
                     DataCell(Text(
-                          "Rp. " +
-                              NumberFormat("#,##0", "en_US")
-                                  .format(int.parse(e.penerimaan!.barangPrice)),
-                          style: Theme.of(context).textTheme.caption)),
-
+                        "Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(int.parse(e.penerimaan!.barangPrice)),
+                        style: Theme.of(context).textTheme.caption)),
                     DataCell(Text(
                         e.status == 1
                             ? "Rp. " +
-                              NumberFormat("#,##0", "en_US")
-                                  .format(int.parse((int.parse(e.qty) * int.parse(e.penerimaan!.barangPrice)).toString()))
+                                NumberFormat("#,##0", "en_US").format(int.parse(
+                                    (int.parse(e.qty) *
+                                            int.parse(
+                                                e.penerimaan!.barangPrice))
+                                        .toString()))
                             : '0',
                         style: Theme.of(context).textTheme.caption)),
                     DataCell(Text(
                         e.status == 1
-                            ?  '0' : "Rp. " +
-                              NumberFormat("#,##0", "en_US")
-                                  .format(int.parse((int.parse(e.qty) * int.parse(e.penerimaan!.barangPrice)).toString()))
-                            ,
+                            ? '0'
+                            : "Rp. " +
+                                NumberFormat("#,##0", "en_US").format(int.parse(
+                                    (int.parse(e.qty) *
+                                            int.parse(
+                                                e.penerimaan!.barangPrice))
+                                        .toString())),
                         style: Theme.of(context).textTheme.caption)),
-
-                    
                   ]),
                 )
                 .toList()),
@@ -231,7 +234,8 @@ class _Pb23PageState extends State<Pb23Page> {
     return BlocListener<KlasifikasiBloc, KlasifikasiState>(
       listener: (context, state) {
         if (state is KlasifikasiErrorState) {
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<KlasifikasiBloc, KlasifikasiState>(
@@ -358,4 +362,6 @@ class _Pb23PageState extends State<Pb23Page> {
       ),
     );
   }
+
+  
 }

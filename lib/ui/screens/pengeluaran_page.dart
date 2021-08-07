@@ -1,14 +1,10 @@
-import 'package:dropdown_below/dropdown_below.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gudang_manager/bloc/bagian_bloc/bagian_bloc.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
 import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
-import 'package:gudang_manager/models/bagian.dart';
-import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/models/pengeluaran.dart';
 import 'package:gudang_manager/pdfapi/pdf_api.dart';
-import 'package:gudang_manager/pdfapi/pdf_invoice_api.dart';
 import 'package:gudang_manager/pdfapi/pdf_invoice_api_pengeluaran.dart';
 import 'package:gudang_manager/repo/bagian_repository.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
@@ -131,7 +127,7 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
     return BlocListener<LaporanBloc, LaporanState>(
       listener: (context, state) {
         if (state is LaporanErrorState) {
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<LaporanBloc, LaporanState>(
@@ -298,7 +294,7 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
     return BlocListener<BagianBloc, BagianState>(
       listener: (context, state) {
         if (state is BagianErrorState) {
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<BagianBloc, BagianState>(

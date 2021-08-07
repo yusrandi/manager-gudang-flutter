@@ -234,7 +234,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
                         DataCell(Text(
                             (penerimaans.indexOf(item) + 1).toString(),
                             style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.barang.name,
+                        DataCell(Text(item.barang!.name,
                             style: Theme.of(context).textTheme.caption)),
                         DataCell(Text(item.spkDate,
                             style: Theme.of(context).textTheme.caption)),
@@ -244,7 +244,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
                             style: Theme.of(context).textTheme.caption)),
                         DataCell(Text(item.spmNo == null ? "" : item.spmNo,
                             style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.barangQty + ' ' + item.satuan.name,
+                        DataCell(Text(item.barangQty + ' ' + item.satuan!.name,
                             style: Theme.of(context).textTheme.caption)),
                         DataCell(Text(
                             "Rp. " +
@@ -258,9 +258,9 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
                                         int.parse(item.barangPrice)))
                                     .toString(),
                             style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.barangSisa + ' ' + item.satuan.name,
+                        DataCell(Text(item.barangSisa + ' ' + item.satuan!.name,
                             style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.rekanan.name,
+                        DataCell(Text(item.rekanan!.name,
                             style: Theme.of(context).textTheme.caption)),
                       ]))
                   .toList()),

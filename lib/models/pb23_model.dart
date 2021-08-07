@@ -1,4 +1,4 @@
-import 'package:gudang_manager/models/penerimaan.dart';
+import 'package:gudang_manager/models/penerimaan_model.dart';
 
 class Pb23Model {
   String responsecode = "";

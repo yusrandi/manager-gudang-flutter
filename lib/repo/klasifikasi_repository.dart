@@ -2,7 +2,6 @@
 import 'dart:convert';
 import 'package:gudang_manager/config/api.dart';
 import 'package:gudang_manager/models/klasifikasi_model.dart';
-import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:http/http.dart' as http;
 
 abstract class KlasifikasiRepository {
@@ -10,7 +9,7 @@ abstract class KlasifikasiRepository {
 }
 
 class KlasifikasiRepositoryImpl implements KlasifikasiRepository {
-  final TAG = "KlasifikasiRepositoryImpl";
+  static const TAG = "KlasifikasiRepositoryImpl";
 
   @override
   Future<KlasifikasiModel> getKlasifikasi() async {
