@@ -17,7 +17,11 @@ class AuthGetSuccess extends AuthenticationState {
   AuthGetSuccess({required this.user});
 }
 
-class AuthLoggedInState extends AuthenticationState {}
+class AuthLoggedInState extends AuthenticationState {
+  final int id;
+
+  AuthLoggedInState({required this.id});
+}
 
 class AuthLoggedOutState extends AuthenticationState {}
 

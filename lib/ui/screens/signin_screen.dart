@@ -1,15 +1,22 @@
 import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:gudang_manager/bloc/auth_bloc/authentication_bloc.dart';
 import 'package:gudang_manager/config/shared_info.dart';
+import 'package:gudang_manager/constant/constant.dart';
+import 'package:gudang_manager/helper/keyboard.dart';
 import 'package:gudang_manager/res/images.dart';
 import 'package:gudang_manager/res/strings.dart';
 import 'package:gudang_manager/res/styling.dart';
 import 'package:gudang_manager/ui/screens/home_page.dart';
 
 class SignInScreen extends StatefulWidget {
+  final AuthenticationBloc authenticationBloc;
+
+  const SignInScreen({Key? key, required this.authenticationBloc})
+      : super(key: key);
+
   @override
   _SignInScreenState createState() => _SignInScreenState();
 }
@@ -20,28 +27,36 @@ class _SignInScreenState extends State<SignInScreen> {
   final _userEmail = new TextEditingController();
   final _userPass = new TextEditingController();
 
-  late AuthenticationBloc _authenticationBloc;
   late SharedInfo _sharedInfo;
 
   @override
   void initState() {
     super.initState();
-
-    _authenticationBloc = BlocProvider.of<AuthenticationBloc>(context);
-    _authenticationBloc.add(CheckLoginEvent());
     _sharedInfo = SharedInfo();
-
-    var keyboardVisibilityController = KeyboardVisibilityController();
-    // Query
-    print(
-        'Keyboard visibility direct query: ${keyboardVisibilityController.isVisible}');
-
-    // Subscribe
-    keyboardVisibilityController.onChange.listen((bool visible) {
-      print('Keyboard visibility update. Is visible: $visible');
-      keyboardVisibility = visible;
-    });
   }
+
+  String? validateEmail(value) {
+    if (value.isEmpty) {
+      return kEmailNullError;
+    } else if (!emailValidatorRegExp.hasMatch(value)) {
+      return kInvalidEmailError;
+    } else {
+      return null;
+    }
+  }
+
+  String? validatePass(value) {
+    if (value.isEmpty) {
+      return kPassNullError;
+    } else if (value.length < 8) {
+      return kShortPassError;
+    } else {
+      return null;
+    }
+  }
+
+  bool _passwordVisible = false;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -50,127 +65,147 @@ class _SignInScreenState extends State<SignInScreen> {
         print("State $state");
         if (state is AuthGetFailureState) {
           print("State ${state.error}");
-          _alertError(state.error);
+          EasyLoading.dismiss();
+          EasyLoading.showError(state.error);
         } else if (state is AuthGetSuccess) {
           print("State ${state.user.responsecode}");
           // ignore: unrelated_type_equality_checks
           if (state.user.responsecode == "1") {
-            _alertSuccess("Berhasil");
+            EasyLoading.showSuccess("Welcome");
             _sharedInfo.sharedLoginInfo(state.user.user);
-            gotoHomePage();
+            gotoHomePage(state.user.user.id);
           } else {
-            _alertError("Maaf Anda Belum Terdaftar");
+            EasyLoading.dismiss();
+            EasyLoading.showError(state.user.responsemsg);
           }
-        } else if (state is AuthLoadingState)
-          _alertLoading();
-        else if (state is AuthLoggedInState) gotoHomePage();
+        } else if (state is AuthLoadingState ||
+            state is AuthenticationInitialState) EasyLoading.show();
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: SafeArea(
-          top: false,
-          bottom: false,
-          child: Center(
-            child: _homeContainer(),
+        body: anotherHome(),
+      ),
+    );
+  }
+
+  Container anotherHome() {
+    return Container(
+      height: deviceHeight(context),
+      padding: EdgeInsets.all(16),
+      color: AppTheme.appBackgroundColor,
+      child: Center(
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: Image.asset(
+                      Images.logoImage,
+                      height: 100,
+                    ),
+                  ),
+                ),
+                Text(
+                  Strings.getStartedButton,
+                  style: Theme.of(context).textTheme.headline4,
+                  textAlign: TextAlign.center,
+                ),
+                Container(
+                  child: Text(
+                    Strings.welcomeScreenTitle,
+                    style: Theme.of(context).textTheme.caption,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  cursorColor: redColor,
+                  controller: _userEmail,
+                  validator: validateEmail,
+                  decoration:
+                      buildInputDecoration(Icons.email, "Enter Your Email"),
+                ),
+                SizedBox(height: 16),
+                passwordField(),
+                SizedBox(height: 16),
+                GestureDetector(
+                    onTap: () {
+                      if (_formKey.currentState!.validate()) {
+                        String email = _userEmail.text.trim();
+                        String pass = _userPass.text.trim();
+                        widget.authenticationBloc
+                            .add(LoginEvent(email: email, password: pass));
+                      }
+
+                      KeyboardUtil.hideKeyboard(context);
+                      // gotoHomePage();
+                    },
+                    child: PrimaryButton(btnText: "Sign In")),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _homeContainer() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      color: AppTheme.appBackgroundColor,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(
-              child: Image.asset(
-                Images.logoImage,
-                height: 100,
-              ),
-            ),
+  TextFormField passwordField() {
+    return TextFormField(
+      controller: _userPass,
+      cursorColor: redColor,
+      validator: validatePass,
+      keyboardType: TextInputType.text,
+      obscureText: !_passwordVisible, //This will obscure text dynamically
+      decoration: InputDecoration(
+        labelStyle: const TextStyle(color: Colors.black),
+        labelText: 'Password',
+        hintText: 'Enter your password',
+        // Here is key idea
+        suffixIcon: IconButton(
+          icon: Icon(
+            // Based on passwordVisible state choose the icon
+            _passwordVisible ? Icons.visibility : Icons.visibility_off,
+            color: redColor,
           ),
-          Text(
-            Strings.getStartedButton,
-            style: Theme.of(context).textTheme.headline4,
-            textAlign: TextAlign.center,
-          ),
-          Container(
-            child: Text(
-              Strings.welcomeScreenTitle,
-              style: Theme.of(context).textTheme.caption,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          SizedBox(height: 16),
-          InputWithIcon(
-            inputText: "Enter Email",
-            icon: Icons.email,
-            controller: _userEmail,
-          ),
-          SizedBox(height: 16),
-          InputWithIcon(
-            inputText: "Enter Password",
-            icon: Icons.lock,
-            controller: _userPass,
-          ),
-          SizedBox(height: 16),
-          GestureDetector(
-              onTap: () {
-                String email = _userEmail.text.trim();
-                String pass = _userPass.text.trim();
+          onPressed: () {
+            // Update the state i.e. toogle the state of passwordVisible variable
+            setState(() {
+              _passwordVisible = !_passwordVisible;
+            });
+          },
+        ),
 
-                if (email.isNotEmpty && pass.isNotEmpty) {
-                  _authenticationBloc
-                      .add(LoginEvent(email: email, password: pass));
-                } else {
-                  _alertError("Harap Mengisi Semua Kolom");
-                }
-                // gotoHomePage();
-              },
-              child: PrimaryButton(btnText: "Sign In")),
-        ],
+        prefixIcon: const Icon(Icons.lock),
+
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(color: Colors.green, width: 1),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide(
+            color: redColor,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide(
+            color: hintTextColor,
+            width: 1,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildLoading() {
-    return Center(
-      child: CircularProgressIndicator(),
-    );
-  }
-
-  void _alertLoading() {
-    Center(child: CircularProgressIndicator());
-  }
-
-  void _alertSuccess(String msg) {
-    ArtSweetAlert.show(
-        context: context,
-        artDialogArgs:
-            ArtDialogArgs(type: ArtSweetAlertType.success, title: msg));
-  }
-
-  void _alertError(String msg) {
-    ArtSweetAlert.show(
-        context: context,
-        artDialogArgs: ArtDialogArgs(
-            type: ArtSweetAlertType.danger, title: "Oops...", text: msg));
-  }
-
-  void gotoHomePage() {
-    Navigator.of(context).pushReplacement(//new
-        new MaterialPageRoute(
-            //new
-            settings: const RouteSettings(name: '/form'), //new
-            builder: (context) => new HomePage()) //new
-        //new
-        );
+  void gotoHomePage(int id) {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+      return LandingHomePage(
+          authenticationBloc: widget.authenticationBloc, id: id);
+    }));
   }
 }
 
@@ -188,7 +223,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
     return Container(
       decoration: BoxDecoration(
           color: AppTheme.redBackgroundColor,
-          borderRadius: BorderRadius.circular(50)),
+          borderRadius: BorderRadius.circular(10)),
       padding: EdgeInsets.all(20),
       child: Center(
         child: Text(widget.btnText,

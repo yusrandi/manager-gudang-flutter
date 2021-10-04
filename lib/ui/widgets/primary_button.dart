@@ -15,19 +15,11 @@ class _PrimaryButtonState extends State<PrimaryButton> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: widget.color,
-          borderRadius: BorderRadius.circular(5)),
-      padding: EdgeInsets.all(8),
+          color: widget.color, borderRadius: BorderRadius.circular(5)),
+      padding: EdgeInsets.all(16),
       child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.print, color: Colors.white,),
-            SizedBox(width: 8,),
-            Text(widget.btnText,
-              style: Theme.of(context).primaryTextTheme.subtitle1),
-          ],
-        ),
+        child: Text(widget.btnText,
+            style: Theme.of(context).primaryTextTheme.subtitle1),
       ),
     );
   }
