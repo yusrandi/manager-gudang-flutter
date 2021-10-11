@@ -42,6 +42,9 @@ class _Pb22PageState extends State<Pb22Page> {
   List<ItemModel> listKlasifikasi = [];
   List<Pb22> list = [];
 
+  int resBarangId = 0;
+  int resSisa = 0;
+
   @override
   void initState() {
     super.initState();
@@ -112,7 +115,8 @@ class _Pb22PageState extends State<Pb22Page> {
     return BlocListener<LaporanBloc, LaporanState>(
       listener: (context, state) {
         if (state is LaporanErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<LaporanBloc, LaporanState>(
@@ -144,60 +148,84 @@ class _Pb22PageState extends State<Pb22Page> {
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
-            columnSpacing: 10,
-            columns: [
-              DataColumn(
-                  label:
-                      Text("NO", style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Tanggal",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Jenis Barang",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Barang Masuk",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Barang Keluar",
-                      style: Theme.of(context).textTheme.subtitle1)),
-              DataColumn(
-                  label: Text("Sisa",
-                      style: Theme.of(context).textTheme.subtitle1)),
-            ],
-            rows: list
-                .map(
-                  (e) => DataRow(cells: [
-                    DataCell(Text((list.indexOf(e) + 1).toString(),
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.date,
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.penerimaan!.barang!.name,
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(
-                        e.status == 1
-                            ? e.qty + ' ' + e.penerimaan!.satuan!.name
-                            : '0',
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(
-                        e.status == 1
-                            ? '0'
-                            : e.qty + ' ' + e.penerimaan!.satuan!.name,
-                        style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.sisa + ' ' + e.penerimaan!.satuan!.name,
-                        style: Theme.of(context).textTheme.caption)),
-                  ]),
-                )
-                .toList()),
+          columnSpacing: 10,
+          columns: [
+            DataColumn(
+                label:
+                    Text("NO", style: Theme.of(context).textTheme.subtitle1)),
+            DataColumn(
+                label: Text("Tanggal",
+                    style: Theme.of(context).textTheme.subtitle1)),
+            DataColumn(
+                label: Text("Jenis Barang",
+                    style: Theme.of(context).textTheme.subtitle1)),
+            DataColumn(
+                label: Text("Barang Masuk",
+                    style: Theme.of(context).textTheme.subtitle1)),
+            DataColumn(
+                label: Text("Barang Keluar",
+                    style: Theme.of(context).textTheme.subtitle1)),
+            DataColumn(
+                label:
+                    Text("Sisa", style: Theme.of(context).textTheme.subtitle1)),
+          ],
+          rows: list
+              .map(
+                (e) => DataRow(cells: [
+                  DataCell(Text((list.indexOf(e) + 1).toString(),
+                      style: Theme.of(context).textTheme.caption)),
+                  DataCell(
+                      Text(e.date, style: Theme.of(context).textTheme.caption)),
+                  DataCell(Text(e.penerimaan!.barang!.name,
+                      style: Theme.of(context).textTheme.caption)),
+                  DataCell(Text(
+                      e.status == 1
+                          ? e.qty + ' ' + e.penerimaan!.satuan!.name
+                          : '0',
+                      style: Theme.of(context).textTheme.caption)),
+                  DataCell(Text(
+                      e.status == 1
+                          ? '0'
+                          : e.qty + ' ' + e.penerimaan!.satuan!.name,
+                      style: Theme.of(context).textTheme.caption)),
+                  DataCell(Text(
+                      getSisa(e.sisa, e.barangId, e.status, e.qty) +
+                          ' ' +
+                          e.penerimaan!.satuan!.name,
+                      style: Theme.of(context).textTheme.caption)),
+                ]),
+              )
+              .toList(),
+        ),
       ),
     );
+  }
+
+  String getSisa(String sisa, int barangId, int status, String qty) {
+    var nsisa = int.parse(sisa);
+    var nQty = int.parse(qty);
+
+    if (resBarangId == barangId) {
+      if (status == 1) {
+        resSisa += nQty;
+      } else {
+        resSisa -= nQty;
+      }
+    } else {
+      resSisa = nQty;
+    }
+
+    resBarangId = barangId;
+
+    return resSisa.toString();
   }
 
   Widget _loadSpesifikasi() {
     return BlocListener<KlasifikasiBloc, KlasifikasiState>(
       listener: (context, state) {
         if (state is KlasifikasiErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<KlasifikasiBloc, KlasifikasiState>(

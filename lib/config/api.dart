@@ -2,7 +2,7 @@ class Api {
   //* Creating instance constructor;
   static Api instance = Api();
   //* Base API URL
-  static const baseURL = "http://192.168.1.2/gudang/public/api";
+  static const baseURL = "http://192.168.1.3/gudang/public/api";
 
   String getUsers = "$baseURL/user";
   String loginURL = "$baseURL/login";
