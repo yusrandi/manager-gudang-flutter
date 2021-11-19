@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:gudang_manager/repo/barang_repository.dart';
 import 'package:gudang_manager/repo/user_repository.dart';
 import 'package:gudang_manager/res/size_config.dart';
 import 'package:gudang_manager/res/styling.dart';
@@ -9,6 +10,7 @@ import 'package:gudang_manager/ui/screens/home_page.dart';
 import 'package:gudang_manager/ui/screens/splash_screen.dart';
 
 import 'bloc/auth_bloc/authentication_bloc.dart';
+import 'bloc/barang_bloc/barang_bloc.dart';
 
 void main() {
   runApp(MyApp());
@@ -37,12 +39,15 @@ class MyApp extends StatelessWidget {
     return BlocProvider(
       create: (BuildContext context) =>
           AuthenticationBloc(UserRepositoryImpl()),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
-        theme: AppTheme.lightTheme,
-        home: SplashScreen(),
-        builder: EasyLoading.init(),
+      child: BlocProvider(
+        create: (context) => BarangBloc(BarangRepositoryImpl()),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Flutter Demo',
+          theme: AppTheme.lightTheme,
+          home: SplashScreen(),
+          builder: EasyLoading.init(),
+        ),
       ),
     );
   }

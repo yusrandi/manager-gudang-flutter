@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gudang_manager/bloc/barang_bloc/barang_bloc.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
 import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
+import 'package:gudang_manager/constant/constant.dart';
+import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/models/rekapitulasi_model.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
 import 'package:gudang_manager/res/styling.dart';
@@ -32,11 +35,10 @@ class _RekapitulasiPage extends State<RekapitulasiPage> {
   late LaporanBloc _bloc;
   late KlasifikasiBloc _klasifikasiBloc;
 
-  String _spesifikasiId = "";
+  String _barangId = "";
+  String _barangLabel = "Pilih Barang";
   String _tahun = DateFormat('yyyy').format(DateTime.now());
-
-  String _tahunDropdownValue = "Tahun";
-  String _spesifikasiDropdownValue = "Spesifikasi";
+  String _tahunLabel = "Pilih Tahun";
 
   List<ItemModel> listKlasifikasi = [];
   List<Rekapitulasi> list = [];
@@ -48,14 +50,14 @@ class _RekapitulasiPage extends State<RekapitulasiPage> {
 
     _bloc = BlocProvider.of<LaporanBloc>(context);
     _klasifikasiBloc = BlocProvider.of<KlasifikasiBloc>(context);
-    _bloc.add(FetchLaporanEventRekapitulasi(
-        spesifikasiId: _spesifikasiId, tahun: _tahun));
 
     _klasifikasiBloc.add(FetchKlasifikasiEvent());
   }
 
   @override
   Widget build(BuildContext context) {
+    _bloc.add(
+        FetchLaporanEventRekapitulasi(spesifikasiId: _barangId, tahun: _tahun));
     return Scaffold(
         appBar: AppBar(
           brightness: Brightness.light,
@@ -84,20 +86,85 @@ class _RekapitulasiPage extends State<RekapitulasiPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            SizedBox(height: 16),
             Container(
-                width: MediaQuery.of(context).size.width / 3,
-                child: GestureDetector(
-                    onTap: () async {
-                      // final pdfFile = await PdfApiRekapitulasi.generate(list);
-                      // PdfApi.openFile(pdfFile);
-                    },
-                    child: PrimaryButton(
-                        btnText: "Export",
-                        color: AppTheme.blueBackgroundColor))),
-            SizedBox(
-              height: 16,
+              height: 35,
+              child: ListView(
+                // This next line does the trick.
+                scrollDirection: Axis.horizontal,
+                children: <Widget>[
+                  Container(
+                    width: 160.0,
+                    child: GestureDetector(
+                        onTap: () async {
+                          // final pdfFile = await PdfApiRekapitulasi.generate(list);
+                          // PdfApi.openFile(pdfFile);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(16)),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.print_outlined, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text("Export",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 18))
+                              ],
+                            ),
+                          ),
+                        )),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 100.0,
+                    child: tahun(),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 150.0,
+                    child: BlocBuilder<BarangBloc, BarangState>(
+                      builder: (context, state) {
+                        if (state is BarangErrorState) {
+                          return _buildErrorUi(state.msg);
+                        } else if (state is BarangLoadedState) {
+                          return GestureDetector(
+                              onTap: () {
+                                Navigator.of(context)
+                                    .push(MaterialPageRoute<bool>(
+                                  builder: (BuildContext context) {
+                                    return Scaffold(
+                                      appBar: AppBar(
+                                        backgroundColor:
+                                            AppTheme.redBackgroundColor,
+                                        title: Text("Pilih Barang"),
+                                      ),
+                                      body: WillPopScope(
+                                        onWillPop: () async {
+                                          Navigator.pop(context, false);
+                                          return false;
+                                        },
+                                        child: loadListBarang(state.barangs),
+                                      ),
+                                    );
+                                  },
+                                ));
+                              },
+                              child: barangField());
+                        } else {
+                          return _buildLoading();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-            _dropDownSearch(),
             SizedBox(
               height: 16,
             ),
@@ -134,117 +201,133 @@ class _RekapitulasiPage extends State<RekapitulasiPage> {
     );
   }
 
-  Widget _loadSpesifikasi() {
-    return BlocListener<KlasifikasiBloc, KlasifikasiState>(
-      listener: (context, state) {
-        if (state is KlasifikasiErrorState) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.msg)));
-        }
-      },
-      child: BlocBuilder<KlasifikasiBloc, KlasifikasiState>(
-        builder: (context, state) {
-          print("_loadSpesifikasi state $state");
-          if (state is KLasifikasiLoadingState) {
-            return _buildLoading();
-          }
-          if (state is KlasifikasiLoadedState) {
-            // return _buildPenerimaan(state.laporans);
-            // print("KlasifikasiLoadedState state $state");
-            List<ItemModel> list = [];
-            list.add(ItemModel("Spesifikasi", "Spesifikasi"));
-            state.klasifikasis.forEach((element) {
-              list.add(ItemModel(element.id.toString(), element.name));
-            });
-            return _dropDownItemSpesifikasi(list);
-          } else if (state is KlasifikasiErrorState) {
-            return _buildErrorUi(state.msg);
-          } else {
-            return _buildErrorUi("Undefined");
-          }
-        },
-      ),
-    );
-  }
-
-  Widget _dropDownItemSpesifikasi(List<ItemModel> list) {
+  Container loadListBarang(List<Barang> list) {
     return Container(
-      decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.hintTextColor, width: 1),
-          borderRadius: BorderRadius.circular(10)),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButton<String>(
-        value: _spesifikasiDropdownValue,
-        hint: Text("Spesifikasi"),
-        items: list.map((ItemModel value) {
-          return DropdownMenuItem<String>(
-            value: value.id.toString(),
-            child: new Text(value.value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          print(newValue);
-          setState(() {
-            _spesifikasiDropdownValue = newValue!;
-            // resKategoriId = value.toString();
-            _spesifikasiId = newValue == "Spesifikasi" ? "" : newValue;
-          });
+      child: ListView.builder(
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            var data = list[index];
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _barangId = data.id.toString();
+                    _barangLabel = data.name;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        data.name,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
+    );
+  }
 
-          _bloc.add(FetchLaporanEventRekapitulasi(
-              spesifikasiId: _spesifikasiId, tahun: _tahun));
-        },
+  Container barangField() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_barangLabel',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
 
-  Widget _dropDownSearch() {
-    List<ItemModel> listTahun = [];
-    listTahun.add(ItemModel("Tahun", "Tahun"));
+  GestureDetector tahun() {
+    return GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute<bool>(
+            builder: (BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: AppTheme.redBackgroundColor,
+                  title: Text("Pilih Tahun"),
+                ),
+                body: WillPopScope(
+                  onWillPop: () async {
+                    Navigator.pop(context, false);
+                    return false;
+                  },
+                  child: listTahun(),
+                ),
+              );
+            },
+          ));
+        },
+        child: tahunField());
+  }
+
+  Container listTahun() {
+    List<ItemModel> itemsYear = [];
     int date = int.parse(DateFormat('yyyy').format(DateTime.now()));
     for (int i = date; i > (date - 10); i--) {
-      listTahun.add(ItemModel(i.toString(), i.toString()));
+      itemsYear.add(ItemModel(i.toString(), i.toString()));
     }
 
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(flex: 1, child: _loadSpesifikasi()),
-            SizedBox(width: 8),
-            Expanded(flex: 1, child: _dropDownItemsTahun(listTahun)),
-          ],
-        ),
-      ],
+    return Container(
+      child: ListView.builder(
+          itemCount: itemsYear.length,
+          itemBuilder: (context, index) {
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    _tahun = itemsYear[index].id;
+                    _tahunLabel = itemsYear[index].value;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        itemsYear[index].value,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
     );
   }
 
-  Widget _dropDownItemsTahun(List<ItemModel> list) {
+  Container tahunField() {
     return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.hintTextColor, width: 1),
-          borderRadius: BorderRadius.circular(10)),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButton<String>(
-        value: _tahunDropdownValue,
-        hint: Text("Tahun"),
-        items: list.map((ItemModel value) {
-          return DropdownMenuItem<String>(
-            value: value.id,
-            child: new Text(value.value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          _tahun = newValue! == "Tahun" ? "" : newValue;
-
-          _bloc.add(FetchLaporanEventRekapitulasi(
-              spesifikasiId: _spesifikasiId, tahun: _tahun));
-
-          setState(() {
-            _tahunDropdownValue = newValue;
-            // resKategoriId = value.toString();
-          });
-        },
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_tahunLabel',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
@@ -350,34 +433,34 @@ class _RekapitulasiPage extends State<RekapitulasiPage> {
                         style: Theme.of(context).textTheme.caption)),
                     DataCell(Text(e.namaBarang,
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.qtyPen.toString()+' '+e.satuan,
+                    DataCell(Text(e.qtyPen.toString() + ' ' + e.satuan,
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text("Rp. " +
-                            NumberFormat("#,##0", "en_US")
-                                .format(e.price),
+                    DataCell(Text(
+                        "Rp. " + NumberFormat("#,##0", "en_US").format(e.price),
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text("Rp. " +
+                    DataCell(Text(
+                        "Rp. " +
                             NumberFormat("#,##0", "en_US")
                                 .format(e.price * e.qtyPen),
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.qtyPeng.toString()+' '+e.satuan,
+                    DataCell(Text(e.qtyPeng.toString() + ' ' + e.satuan,
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text("Rp. " +
-                            NumberFormat("#,##0", "en_US")
-                                .format(e.price),
+                    DataCell(Text(
+                        "Rp. " + NumberFormat("#,##0", "en_US").format(e.price),
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text("Rp. " +
+                    DataCell(Text(
+                        "Rp. " +
                             NumberFormat("#,##0", "en_US")
                                 .format(e.price * e.qtyPeng),
                         style: Theme.of(context).textTheme.caption)),
-
-                    DataCell(Text((e.qtyPen - e.qtyPeng).toString()+' '+e.satuan,
+                    DataCell(Text(
+                        (e.qtyPen - e.qtyPeng).toString() + ' ' + e.satuan,
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text("Rp. " +
-                            NumberFormat("#,##0", "en_US")
-                                .format(e.price),
+                    DataCell(Text(
+                        "Rp. " + NumberFormat("#,##0", "en_US").format(e.price),
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text("Rp. " +
+                    DataCell(Text(
+                        "Rp. " +
                             NumberFormat("#,##0", "en_US")
                                 .format(e.price * (e.qtyPen - e.qtyPeng)),
                         style: Theme.of(context).textTheme.caption)),

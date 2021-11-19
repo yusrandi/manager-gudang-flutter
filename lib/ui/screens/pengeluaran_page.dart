@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gudang_manager/bloc/bagian_bloc/bagian_bloc.dart';
+import 'package:gudang_manager/bloc/barang_bloc/barang_bloc.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
 import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
+import 'package:gudang_manager/constant/constant.dart';
+import 'package:gudang_manager/models/bagian.dart';
+import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/models/pengeluaran.dart';
 import 'package:gudang_manager/pdfapi/pdf_api.dart';
 import 'package:gudang_manager/pdfapi/pdf_invoice_api_pengeluaran.dart';
@@ -10,7 +14,6 @@ import 'package:gudang_manager/repo/bagian_repository.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
 import 'package:gudang_manager/res/styling.dart';
 import 'package:gudang_manager/ui/screens/penerimaan_page.dart';
-import 'package:gudang_manager/ui/widgets/primary_button.dart';
 import 'package:intl/intl.dart';
 
 class PengeluaranLandingPage extends StatelessWidget {
@@ -37,19 +40,20 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
   late KlasifikasiBloc _klasifikasiBloc;
   late BagianBloc _bagianBloc;
 
-  String _spesifikasiId = "";
   String _bagianId = "";
+  String _bagianLabel = "Pilih Unit Bagian";
+
+  String _barangId = "";
+  String _barangLabel = "Pilih Barang";
+
   String _semester = "01,12";
+  String _semesterLabel = "Pilih Priode";
   String _tahun = DateFormat('yyyy').format(DateTime.now());
+  String _tahunLabel = "Pilih Tahun";
 
   List<ItemModel> listKlasifikasi = [];
   List<ItemModel> listBagian = [];
   List<Pengeluaran> pengeluarans = [];
-
-  String _semesterDropdownValue = "Priode";
-  String _tahunDropdownValue = "Tahun";
-  String _spesifikasiDropdownValue = "Spesifikasi";
-  String _bagianDropdownValue = "Bagian";
 
   late Size _screenSize;
 
@@ -61,18 +65,18 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
     _klasifikasiBloc = BlocProvider.of<KlasifikasiBloc>(context);
     _bagianBloc = BlocProvider.of<BagianBloc>(context);
 
-    _bloc.add(FetchLaporanPengeluaranEvent(
-        spesifikasiId: _spesifikasiId,
-        bagianId: _bagianId,
-        semester: _semester,
-        tahun: _tahun));
-
     _klasifikasiBloc.add(FetchKlasifikasiEvent());
     _bagianBloc.add(FetchBagianEvent());
   }
 
   @override
   Widget build(BuildContext context) {
+    _bloc.add(FetchLaporanPengeluaranEvent(
+        spesifikasiId: _barangId,
+        bagianId: _bagianId,
+        semester: _semester,
+        tahun: _tahun));
+
     _screenSize = MediaQuery.of(context).size;
     return Scaffold(
         appBar: AppBar(
@@ -102,19 +106,97 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Container(
-                width: MediaQuery.of(context).size.width / 3,
-                child: GestureDetector(
-                    onTap: () async {
-                      final pdfFile =
-                          await PdfInvoiceApiPengeluaran.generate(pengeluarans);
-                      PdfApi.openFile(pdfFile);
-                    },
-                    child: PrimaryButton(
-                        btnText: "Export",
-                        color: AppTheme.blueBackgroundColor))),
             SizedBox(height: 16),
-            _dropDownSearch(),
+            Container(
+              height: 35,
+              child: ListView(
+                // This next line does the trick.
+                scrollDirection: Axis.horizontal,
+                children: <Widget>[
+                  Container(
+                    width: 160.0,
+                    child: GestureDetector(
+                        onTap: () async {
+                          final pdfFile =
+                              await PdfInvoiceApiPengeluaran.generate(
+                                  pengeluarans);
+                          PdfApi.openFile(pdfFile);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(16)),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.print_outlined, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text("Export",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 18))
+                              ],
+                            ),
+                          ),
+                        )),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 100.0,
+                    child: periode(),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 100.0,
+                    child: tahun(),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 150.0,
+                    child: _loadBagian(),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 150.0,
+                    child: BlocBuilder<BarangBloc, BarangState>(
+                      builder: (context, state) {
+                        if (state is BarangErrorState) {
+                          return _buildErrorUi(state.msg);
+                        } else if (state is BarangLoadedState) {
+                          return GestureDetector(
+                              onTap: () {
+                                Navigator.of(context)
+                                    .push(MaterialPageRoute<bool>(
+                                  builder: (BuildContext context) {
+                                    return Scaffold(
+                                      appBar: AppBar(
+                                        backgroundColor:
+                                            AppTheme.redBackgroundColor,
+                                        title: Text("Pilih Barang"),
+                                      ),
+                                      body: WillPopScope(
+                                        onWillPop: () async {
+                                          Navigator.pop(context, false);
+                                          return false;
+                                        },
+                                        child: loadListBarang(state.barangs),
+                                      ),
+                                    );
+                                  },
+                                ));
+                              },
+                              child: barangField());
+                        } else {
+                          return _buildLoading();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
             SizedBox(height: 16),
             _loadPengeluaran(),
           ],
@@ -127,7 +209,8 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
     return BlocListener<LaporanBloc, LaporanState>(
       listener: (context, state) {
         if (state is LaporanErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.msg)));
         }
       },
       child: BlocBuilder<LaporanBloc, LaporanState>(
@@ -221,237 +304,304 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
     );
   }
 
-  Widget _dropDownSearch() {
-    List<ItemModel> listPeriode = [];
-    listPeriode.add(ItemModel("Priode", "Priode"));
-    listPeriode.add(ItemModel("01,12", "1 Tahun"));
-    listPeriode.add(ItemModel("01,06", "Semester 1"));
-    listPeriode.add(ItemModel("07,12", "Semester 2"));
+  GestureDetector periode() {
+    return GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute<bool>(
+            builder: (BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: AppTheme.redBackgroundColor,
+                  title: Text("Pilih Periode"),
+                ),
+                body: WillPopScope(
+                  onWillPop: () async {
+                    Navigator.pop(context, false);
+                    return false;
+                  },
+                  child: listPeriode(),
+                ),
+              );
+            },
+          ));
+        },
+        child: periodeField());
+  }
 
-    List<ItemModel> listTahun = [];
-    listTahun.add(ItemModel("Tahun", "Tahun"));
-    int date = int.parse(DateFormat('yyyy').format(DateTime.now()));
-    for (int i = date; i > (date - 10); i--) {
-      listTahun.add(ItemModel(i.toString(), i.toString()));
-    }
+  Container listPeriode() {
+    List<ItemModel> items = [
+      ItemModel("01,12", "1 Tahun"),
+      ItemModel("01,06", "Semester 1"),
+      ItemModel("07,12", "Semester 2"),
+    ];
 
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(flex: 1, child: _dropDownItemsSemester(listPeriode)),
-            SizedBox(width: 8),
-            Expanded(flex: 1, child: _dropDownItemsTahun(listTahun)),
-          ],
-        ),
-        SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(flex: 1, child: _loadSpesifikasi()),
-            SizedBox(width: 8),
-            Expanded(flex: 1, child: _loadBagian()),
-          ],
-        ),
-      ],
+    return Container(
+      child: ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    _semester = items[index].id;
+                    _semesterLabel = items[index].value;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        items[index].value,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
     );
   }
 
-  Widget _loadSpesifikasi() {
-    return BlocListener<KlasifikasiBloc, KlasifikasiState>(
-      listener: (context, state) {
-        if (state is KlasifikasiErrorState) {
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
-        }
-      },
-      child: BlocBuilder<KlasifikasiBloc, KlasifikasiState>(
-        builder: (context, state) {
-          print("_loadSpesifikasi state $state");
-          if (state is KLasifikasiLoadingState) {
-            return _buildLoading();
-          }
-          if (state is KlasifikasiLoadedState) {
-            // return _buildPenerimaan(state.laporans);
-            // print("KlasifikasiLoadedState state $state");
-            List<ItemModel> list = [];
-            list.add(ItemModel("Spesifikasi", "Spesifikasi"));
-            state.klasifikasis.forEach((element) {
-              list.add(ItemModel(element.id.toString(), element.name));
-            });
-            return _dropDownItemSpesifikasi(list);
-          } else if (state is KlasifikasiErrorState) {
-            return _buildErrorUi(state.msg);
-          } else {
-            return _buildErrorUi("Undefined");
-          }
+  Container periodeField() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_semesterLabel',
+        style: const TextStyle(fontSize: 16),
+      ),
+    );
+  }
+
+  GestureDetector tahun() {
+    return GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute<bool>(
+            builder: (BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: AppTheme.redBackgroundColor,
+                  title: Text("Pilih Tahun"),
+                ),
+                body: WillPopScope(
+                  onWillPop: () async {
+                    Navigator.pop(context, false);
+                    return false;
+                  },
+                  child: listTahun(),
+                ),
+              );
+            },
+          ));
         },
+        child: tahunField());
+  }
+
+  Container listTahun() {
+    List<ItemModel> itemsYear = [];
+    int date = int.parse(DateFormat('yyyy').format(DateTime.now()));
+    for (int i = date; i > (date - 10); i--) {
+      itemsYear.add(ItemModel(i.toString(), i.toString()));
+    }
+
+    return Container(
+      child: ListView.builder(
+          itemCount: itemsYear.length,
+          itemBuilder: (context, index) {
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    _tahun = itemsYear[index].id;
+                    _tahunLabel = itemsYear[index].value;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        itemsYear[index].value,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
+    );
+  }
+
+  Container tahunField() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_tahunLabel',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
 
   Widget _loadBagian() {
-    return BlocListener<BagianBloc, BagianState>(
-      listener: (context, state) {
-        if (state is BagianErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+    return BlocBuilder<BagianBloc, BagianState>(
+      builder: (context, state) {
+        // print("state $state");
+        if (state is BagianLoadingState) {
+          return _buildLoading();
+        }
+        if (state is BagianLoadedState) {
+          // return _buildPenerimaan(state.laporans);
+          // print("BagianLoadedState state $state");
+          return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute<bool>(
+                  builder: (BuildContext context) {
+                    return Scaffold(
+                      appBar: AppBar(
+                        backgroundColor: AppTheme.redBackgroundColor,
+                        title: Text("Pilih Unit Bagian"),
+                      ),
+                      body: WillPopScope(
+                        onWillPop: () async {
+                          Navigator.pop(context, false);
+                          return false;
+                        },
+                        child: loadListBagian(state.bagians),
+                      ),
+                    );
+                  },
+                ));
+              },
+              child: bagianField());
+        } else if (state is BagianErrorState) {
+          return _buildErrorUi(state.msg);
+        } else {
+          return _buildErrorUi(state.toString());
         }
       },
-      child: BlocBuilder<BagianBloc, BagianState>(
-        builder: (context, state) {
-          // print("state $state");
-          if (state is BagianLoadingState) {
-            return _buildLoading();
-          }
-          if (state is BagianLoadedState) {
-            // return _buildPenerimaan(state.laporans);
-            // print("BagianLoadedState state $state");
-            List<ItemModel> list = [];
-            list.add(ItemModel("Bagian", "Bagian"));
-            state.bagians.forEach((element) {
-              print(element.name);
-              list.add(ItemModel(element.id.toString(), element.name));
-            });
-            return _dropDownItemBagian(list);
-          } else if (state is BagianErrorState) {
-            return _buildErrorUi(state.msg);
-          } else {
-            return _buildErrorUi("Undefined");
-          }
-        },
+    );
+  }
+
+  Container loadListBagian(List<Bagian> list) {
+    return Container(
+      child: ListView.builder(
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            var data = list[index];
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _bagianId = data.id.toString();
+                    _bagianLabel = data.name;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        data.name,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
+    );
+  }
+
+  Container bagianField() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_bagianLabel',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
 
-  Widget _dropDownItemsSemester(List<ItemModel> list) {
+  Container loadListBarang(List<Barang> list) {
     return Container(
-      decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.hintTextColor, width: 1),
-          borderRadius: BorderRadius.circular(10)),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButton<String>(
-        value: _semesterDropdownValue,
-        hint: Text("Priode"),
-        items: list.map((ItemModel value) {
-          return DropdownMenuItem<String>(
-            value: value.id,
-            child: new Text(value.value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          setState(() {
-            _semesterDropdownValue = newValue!;
-            _semester = newValue == "Priode" ? "" : newValue;
-            // resKategoriId = value.toString();
-
-            print(_semester);
-            _bloc.add(FetchLaporanPengeluaranEvent(
-                spesifikasiId: _spesifikasiId,
-                bagianId: _bagianId,
-                semester: _semester,
-                tahun: _tahun));
-          });
-        },
-      ),
+      child: ListView.builder(
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            var data = list[index];
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _barangId = data.id.toString();
+                    _barangLabel = data.name;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        data.name,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
     );
   }
 
-  Widget _dropDownItemsTahun(List<ItemModel> list) {
+  Container barangField() {
     return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.hintTextColor, width: 1),
-          borderRadius: BorderRadius.circular(10)),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButton<String>(
-        value: _tahunDropdownValue,
-        hint: Text("Tahun"),
-        items: list.map((ItemModel value) {
-          return DropdownMenuItem<String>(
-            value: value.id,
-            child: new Text(value.value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          _tahun = newValue! == "Tahun" ? "" : newValue;
-
-          _bloc.add(FetchLaporanPengeluaranEvent(
-              spesifikasiId: _spesifikasiId,
-              bagianId: _bagianId,
-              semester: _semester,
-              tahun: _tahun));
-
-          setState(() {
-            _tahunDropdownValue = newValue;
-            // resKategoriId = value.toString();
-          });
-        },
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
       ),
-    );
-  }
-
-  Widget _dropDownItemSpesifikasi(List<ItemModel> list) {
-    return Container(
-      decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.hintTextColor, width: 1),
-          borderRadius: BorderRadius.circular(10)),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButton<String>(
-        value: _spesifikasiDropdownValue,
-        hint: Text("Spesifikasi"),
-        items: list.map((ItemModel value) {
-          return DropdownMenuItem<String>(
-            value: value.id.toString(),
-            child: new Text(value.value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          print(newValue);
-          setState(() {
-            _spesifikasiDropdownValue = newValue!;
-            // resKategoriId = value.toString();
-            _spesifikasiId = newValue == "Spesifikasi" ? "" : newValue;
-          });
-
-          _bloc.add(FetchLaporanPengeluaranEvent(
-              spesifikasiId: _spesifikasiId,
-              bagianId: _bagianId,
-              semester: _semester,
-              tahun: _tahun));
-        },
-      ),
-    );
-  }
-
-  Widget _dropDownItemBagian(List<ItemModel> list) {
-    return Container(
-      decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.hintTextColor, width: 1),
-          borderRadius: BorderRadius.circular(10)),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButton<String>(
-        value: _bagianDropdownValue,
-        hint: Text("Bagian"),
-        items: list.map((ItemModel value) {
-          return DropdownMenuItem<String>(
-            value: value.id.toString(),
-            child: new Text(value.value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          print(newValue);
-
-          setState(() {
-            _bagianDropdownValue = newValue!;
-            // resKategoriId = value.toString();
-            _bagianId = newValue == "Bagian" ? "" : newValue;
-          });
-
-          _bloc.add(FetchLaporanPengeluaranEvent(
-              spesifikasiId: _spesifikasiId,
-              bagianId: _bagianId,
-              semester: _semester,
-              tahun: _tahun));
-        },
+      child: Text(
+        '$_barangLabel',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }

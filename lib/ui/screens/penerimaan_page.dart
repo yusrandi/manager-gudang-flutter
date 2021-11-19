@@ -1,15 +1,19 @@
-import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:grouped_list/grouped_list.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
 import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
+import 'package:gudang_manager/constant/constant.dart';
 import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/pdfapi/pdf_api.dart';
 import 'package:gudang_manager/pdfapi/pdf_invoice_api.dart';
 import 'package:gudang_manager/repo/laporan_repository.dart';
 import 'package:gudang_manager/res/styling.dart';
-import 'package:gudang_manager/ui/widgets/primary_button.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
+import "package:collection/collection.dart";
+
 class LandingPenerimaanPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -32,10 +36,15 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
   late KlasifikasiBloc _klasifikasiBloc;
 
   String _spesifikasiId = "";
+  String _spesifikasiIdLabel = "Pilih Spesifikasi Barang";
   String _semester = "01,12";
+  String _semesterLabel = "Pilih Periode";
   String _tahun = DateFormat('yyyy').format(DateTime.now());
+  String _tahunLabel = "Pilih Tahun";
 
   List<ItemModel> listKlasifikasi = [];
+
+  double heightOfModalBottomSheet = 100;
 
   @override
   void initState() {
@@ -43,14 +52,15 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
     _bloc = BlocProvider.of<LaporanBloc>(context);
     _klasifikasiBloc = BlocProvider.of<KlasifikasiBloc>(context);
 
-    _bloc.add(FetchLaporanPenerimaanEvent(
-        spesifikasiId: _spesifikasiId, semester: _semester, tahun: _tahun));
-
     _klasifikasiBloc.add(FetchKlasifikasiEvent());
   }
 
   @override
   Widget build(BuildContext context) {
+    // print("build");
+
+    _bloc.add(FetchLaporanPenerimaanEvent(
+        spesifikasiId: _spesifikasiId, semester: _semester, tahun: _tahun));
     return Scaffold(
         appBar: AppBar(
           brightness: Brightness.light,
@@ -72,29 +82,22 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
   }
 
   Widget _pageBody() {
-    return BlocListener<LaporanBloc, LaporanState>(
-      listener: (context, state) {
-        if (state is LaporanErrorState) {
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+    return BlocBuilder<LaporanBloc, LaporanState>(
+      builder: (context, state) {
+        // print("state $state");
+        if (state is LaporanInitialState) {
+          return _buildLoading();
+        } else if (state is LaporanLoadingState) {
+          return _buildLoading();
+        } else if (state is LaporanLoadedState) {
+          // print(state.laporans.length);
+          return _buildPenerimaan(state.laporans);
+        } else if (state is LaporanErrorState) {
+          return _buildErrorUi(state.msg);
+        } else {
+          return _buildErrorUi(state.toString());
         }
       },
-      child: BlocBuilder<LaporanBloc, LaporanState>(
-        builder: (context, state) {
-          print("state $state");
-          if (state is LaporanInitialState) {
-            return _buildLoading();
-          } else if (state is LaporanLoadingState) {
-            return _buildLoading();
-          } else if (state is LaporanLoadedState) {
-            print(state.laporans.length);
-            return _buildPenerimaan(state.laporans);
-          } else if (state is LaporanErrorState) {
-            return _buildErrorUi(state.msg);
-          } else {
-            return _buildErrorUi("Undefined");
-          }
-        },
-      ),
     );
   }
 
@@ -102,20 +105,6 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
     return Center(
       child: CircularProgressIndicator(),
     );
-  }
-
-  void _alertSuccess(String msg) {
-    ArtSweetAlert.show(
-        context: context,
-        artDialogArgs:
-            ArtDialogArgs(type: ArtSweetAlertType.success, title: msg));
-  }
-
-  void _alertError(String msg) {
-    ArtSweetAlert.show(
-        context: context,
-        artDialogArgs: ArtDialogArgs(
-            type: ArtSweetAlertType.danger, title: "Oops...", text: msg));
   }
 
   Widget _buildErrorUi(String message) {
@@ -138,46 +127,67 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            SizedBox(height: 16),
             Container(
-                width: MediaQuery.of(context).size.width / 3,
-                child: GestureDetector(
-                    onTap: () async {
-                      final pdfFile = await PdfInvoiceApi.generate(penerimaans);
-                      PdfApi.openFile(pdfFile);
-                    },
-                    child: PrimaryButton(
-                        btnText: "Export",
-                        color: AppTheme.blueBackgroundColor))),
+              height: 35,
+              child: ListView(
+                // This next line does the trick.
+                scrollDirection: Axis.horizontal,
+                children: <Widget>[
+                  Container(
+                    width: 160.0,
+                    child: GestureDetector(
+                        onTap: () async {
+                          final pdfFile =
+                              await PdfInvoiceApi.generate(penerimaans);
+                          PdfApi.openFile(pdfFile);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(16)),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.print_outlined, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text("Export",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 18))
+                              ],
+                            ),
+                          ),
+                        )),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 100.0,
+                    child: periode(),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 100.0,
+                    child: tahun(),
+                  ),
+                  SizedBox(width: 8),
+                  Container(
+                    width: 180.0,
+                    child: _pageKlasifikasiBody(),
+                  ),
+                ],
+              ),
+            ),
+
+            // _dropDownSearch(),
             SizedBox(height: 16),
-            _dropDownSearch(),
-            SizedBox(height: 16),
-            _laporanItemList(penerimaans),
+
+            _laporanItemListNew(penerimaans),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _dropDownSearch() {
-    List<ItemModel> items = [
-      ItemModel("01,12", "1 Tahun"),
-      ItemModel("01,06", "Semester 1"),
-      ItemModel("07,12", "Semester 2"),
-    ];
-
-    List<ItemModel> itemsYear = [];
-    int date = int.parse(DateFormat('yyyy').format(DateTime.now()));
-    for (int i = date; i > (date - 10); i--) {
-      itemsYear.add(ItemModel(i.toString(), i.toString()));
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _dropDownItems(items, "Priode", 0),
-        _dropDownItems(itemsYear, "Tahun", 1),
-        _pageKlasifikasiBody()
-      ],
     );
   }
 
@@ -214,7 +224,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
                     label: Text("N0 SPM",
                         style: Theme.of(context).textTheme.subtitle1)),
                 DataColumn(
-                    label: Text("QTY",
+                    label: Text("BANYAKNYA",
                         style: Theme.of(context).textTheme.subtitle1)),
                 DataColumn(
                     label: Text("HARGA",
@@ -223,10 +233,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
                     label: Text("TOTAL",
                         style: Theme.of(context).textTheme.subtitle1)),
                 DataColumn(
-                    label: Text("SISA",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("VENDOR",
+                    label: Text("KETERANGAN",
                         style: Theme.of(context).textTheme.subtitle1)),
               ],
               rows: penerimaans
@@ -258,8 +265,6 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
                                         int.parse(item.barangPrice)))
                                     .toString(),
                             style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.barangSisa + ' ' + item.satuan!.name,
-                            style: Theme.of(context).textTheme.caption)),
                         DataCell(Text(item.rekanan!.name,
                             style: Theme.of(context).textTheme.caption)),
                       ]))
@@ -267,68 +272,304 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
         ));
   }
 
-  Widget _dropDownItems(List<ItemModel> items, String msg, int index) {
-    return Container(
-      decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.redBackgroundColor, width: 1),
-          borderRadius: BorderRadius.circular(5)),
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: DropdownButton<String>(
-        hint: Text(msg),
-        items: items.map((ItemModel value) {
-          return DropdownMenuItem<String>(
-            value: value.id,
-            child: new Text(value.value),
-          );
-        }).toList(),
-        onChanged: (value) {
-          setState(() {
-            if (index == 0)
-              _semester = value!;
-            else if (index == 1)
-              _tahun = value!;
-            else if (index == 2) _spesifikasiId = value!;
+  Container _laporanItemListNew(List<Penerimaan> penerimaans) {
+    List<ItemPenerimaan> list = [];
+    final groups = groupBy(penerimaans, (Penerimaan e) {
+      return e.spkNo;
+    });
 
-            _bloc.add(FetchLaporanPenerimaanEvent(
-                spesifikasiId: _spesifikasiId,
-                semester: _semester,
-                tahun: _tahun));
-          });
-        },
-      ),
+    groups.forEach((key, value) {
+      String key = "";
+      String spkDate = "";
+      String spkNo = "";
+      String spmDate = "";
+      String spmNo = "";
+      String vendor = "";
+      String keterangan = "";
+      int subTotal = 0;
+
+      List<Penerimaan> data;
+
+      value.forEach((e) {
+        key = e.spkNo;
+        spkDate = e.spmDate;
+        spkNo = e.spkDate;
+        spmDate = e.spmDate;
+        spmNo = e.spmNo;
+        vendor = e.rekanan!.name;
+        keterangan = "";
+        subTotal += int.parse(e.barangPrice);
+      });
+      data = value;
+
+      list.add(ItemPenerimaan(key, spkDate, spkNo, spmDate, spmNo, vendor,
+          keterangan, subTotal, data));
+    });
+
+    return Container(
+      child: ListView.builder(
+          physics: NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          scrollDirection: Axis.vertical,
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            var data = list[index];
+
+            print("data $data");
+
+            return CardExpand(data);
+          }),
     );
   }
 
   Widget _pageKlasifikasiBody() {
-    return BlocListener<KlasifikasiBloc, KlasifikasiState>(
-      listener: (context, state) {
-        if (state is KlasifikasiErrorState) {
-          Scaffold.of(context).showSnackBar(SnackBar(content: Text(state.msg)));
+    return BlocBuilder<KlasifikasiBloc, KlasifikasiState>(
+      builder: (context, state) {
+        print("state $state");
+        if (state is KLasifikasiLoadingState) {
+          return _buildLoading();
+        }
+        if (state is KlasifikasiLoadedState) {
+          // return _buildPenerimaan(state.laporans);
+          print("KlasifikasiLoadedState state $state");
+
+          return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute<bool>(
+                  builder: (BuildContext context) {
+                    return Scaffold(
+                      appBar: AppBar(
+                        backgroundColor: AppTheme.redBackgroundColor,
+                        title: Text("Pilih Spesifikasi Barang"),
+                      ),
+                      body: WillPopScope(
+                        onWillPop: () async {
+                          Navigator.pop(context, false);
+                          return false;
+                        },
+                        child: loadListKlasifikasi(state.klasifikasis),
+                      ),
+                    );
+                  },
+                ));
+              },
+              child: klasifikasiField());
+        } else if (state is KlasifikasiErrorState) {
+          return _buildErrorUi(state.msg);
+        } else {
+          return _buildErrorUi("Undefined");
         }
       },
-      child: BlocBuilder<KlasifikasiBloc, KlasifikasiState>(
-        builder: (context, state) {
-          print("state $state");
-          if (state is KLasifikasiLoadingState) {
-            return _buildLoading();
-          }
-          if (state is KlasifikasiLoadedState) {
-            // return _buildPenerimaan(state.laporans);
-            print("KlasifikasiLoadedState state $state");
+    );
+  }
 
-            listKlasifikasi.clear();
-            listKlasifikasi.add(ItemModel("", "Spesifikasi"));
-            state.klasifikasis.forEach((element) {
-              listKlasifikasi
-                  .add(ItemModel(element.id.toString(), element.name));
-            });
-            return _dropDownItems(listKlasifikasi, "Spesifikasi", 2);
-          } else if (state is KlasifikasiErrorState) {
-            return _buildErrorUi(state.msg);
-          } else {
-            return _buildErrorUi("Undefined");
-          }
+  Container loadListKlasifikasi(List<Klasifikasi> list) {
+    return Container(
+      child: ListView.builder(
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            var data = list[index];
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _spesifikasiId = data.id.toString();
+                    _spesifikasiIdLabel = data.name;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        data.name,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
+    );
+  }
+
+  Container klasifikasiField() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_spesifikasiIdLabel',
+        style: const TextStyle(fontSize: 16),
+      ),
+    );
+  }
+
+  GestureDetector periode() {
+    return GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute<bool>(
+            builder: (BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: AppTheme.redBackgroundColor,
+                  title: Text("Pilih Periode"),
+                ),
+                body: WillPopScope(
+                  onWillPop: () async {
+                    Navigator.pop(context, false);
+                    return false;
+                  },
+                  child: listPeriode(),
+                ),
+              );
+            },
+          ));
         },
+        child: periodeField());
+  }
+
+  Container listPeriode() {
+    List<ItemModel> items = [
+      ItemModel("01,12", "1 Tahun"),
+      ItemModel("01,06", "Semester 1"),
+      ItemModel("07,12", "Semester 2"),
+    ];
+
+    return Container(
+      child: ListView.builder(
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    _semester = items[index].id;
+                    _semesterLabel = items[index].value;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        items[index].value,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
+    );
+  }
+
+  Container periodeField() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_semesterLabel',
+        style: const TextStyle(fontSize: 16),
+      ),
+    );
+  }
+
+  GestureDetector tahun() {
+    return GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute<bool>(
+            builder: (BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: AppTheme.redBackgroundColor,
+                  title: Text("Pilih Tahun"),
+                ),
+                body: WillPopScope(
+                  onWillPop: () async {
+                    Navigator.pop(context, false);
+                    return false;
+                  },
+                  child: listTahun(),
+                ),
+              );
+            },
+          ));
+        },
+        child: tahunField());
+  }
+
+  Container listTahun() {
+    List<ItemModel> itemsYear = [];
+    int date = int.parse(DateFormat('yyyy').format(DateTime.now()));
+    for (int i = date; i > (date - 10); i--) {
+      itemsYear.add(ItemModel(i.toString(), i.toString()));
+    }
+
+    return Container(
+      child: ListView.builder(
+          itemCount: itemsYear.length,
+          itemBuilder: (context, index) {
+            return Container(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 16),
+              child: GestureDetector(
+                onTap: () async {
+                  setState(() {
+                    _tahun = itemsYear[index].id;
+                    _tahunLabel = itemsYear[index].value;
+                  });
+                  Navigator.pop(context, false);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(),
+                      child: Text(
+                        itemsYear[index].value,
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              ),
+            );
+          }),
+    );
+  }
+
+  Container tahunField() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: kHintTextColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        '$_tahunLabel',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
@@ -364,4 +605,105 @@ class ItemModel {
   String id;
   String value;
   ItemModel(this.id, this.value);
+}
+
+class CardExpand extends StatelessWidget {
+  final ItemPenerimaan data;
+  CardExpand(this.data);
+
+  @override
+  Widget build(BuildContext context) {
+    buildItem(String label) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(data.key),
+      );
+    }
+
+    buildList() {
+      return Column(
+        children: <Widget>[
+          for (var i in data.data) buildItem("Item ${i.barang!.name}"),
+        ],
+      );
+    }
+
+    return ExpandableNotifier(
+        child: ScrollOnExpand(
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: <Widget>[
+            ExpandablePanel(
+              theme: const ExpandableThemeData(
+                headerAlignment: ExpandablePanelHeaderAlignment.center,
+                tapBodyToExpand: true,
+                tapBodyToCollapse: true,
+                hasIcon: false,
+              ),
+              header: Container(
+                color: Colors.indigoAccent,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          ExpandableIcon(
+                            theme: const ExpandableThemeData(
+                              expandIcon: Icons.arrow_right,
+                              collapseIcon: Icons.arrow_drop_down,
+                              iconColor: Colors.white,
+                              iconSize: 28.0,
+                              iconRotationAngle: math.pi / 2,
+                              iconPadding: EdgeInsets.only(right: 5),
+                              hasIcon: false,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              "Items ${data.key}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyText1!
+                                  .copyWith(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        "Items ${data.subTotal}",
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyText1!
+                            .copyWith(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              collapsed: Container(),
+              expanded: buildList(),
+            ),
+          ],
+        ),
+      ),
+    ));
+  }
+}
+
+class ItemPenerimaan {
+  final String key;
+  final String spkDate;
+  final String spkNo;
+  final String spmDate;
+  final String spmNo;
+  final String vendor;
+  final String keterangan;
+  final int subTotal;
+
+  final List<Penerimaan> data;
+
+  ItemPenerimaan(this.key, this.spkDate, this.spkNo, this.spmDate, this.spmNo,
+      this.vendor, this.keterangan, this.subTotal, this.data);
 }

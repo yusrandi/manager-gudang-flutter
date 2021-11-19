@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gudang_manager/bloc/auth_bloc/authentication_bloc.dart';
+import 'package:gudang_manager/bloc/barang_bloc/barang_bloc.dart';
 import 'package:gudang_manager/models/SliderModel.dart';
 import 'package:gudang_manager/res/images.dart';
 import 'package:gudang_manager/res/strings.dart';
 import 'package:gudang_manager/res/styling.dart';
 import 'package:gudang_manager/ui/screens/pb22_page.dart';
 import 'package:gudang_manager/ui/screens/pb23_page.dart';
+import 'package:gudang_manager/ui/screens/pemeliharaan_page.dart';
 import 'package:gudang_manager/ui/screens/penerimaan_page.dart';
 import 'package:gudang_manager/ui/screens/pengeluaran_page.dart';
 import 'package:gudang_manager/ui/screens/rekapitulasi_page.dart';
@@ -43,8 +45,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late BarangBloc barangBloc;
+
   @override
   void initState() {
+    barangBloc = BlocProvider.of(context);
+    barangBloc.add(FetchBarangEvent());
     super.initState();
   }
 
@@ -316,7 +322,7 @@ class _HomePageState extends State<HomePage> {
                   flex: 1,
                   child: GestureDetector(
                     onTap: () {
-                      gotoAnotherPage(RekapitulasiLandingPage());
+                      gotoAnotherPage(LandingPemeliharaanPage());
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

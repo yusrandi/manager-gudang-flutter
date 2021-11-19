@@ -50,6 +50,8 @@ dependencies:
   open_file: ^3.2.1
 
   dropdown_below: ^0.0.9
+  expandable: ^5.0.1
+  grouped_list: ^4.1.0
 
 
 dev_dependencies:

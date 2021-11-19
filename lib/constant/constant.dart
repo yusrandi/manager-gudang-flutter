@@ -9,6 +9,7 @@ Color purpleColor = Color(0xff452590);
 Color unSelectedTabBackgroundColor = Color(0xFFFFFFFC);
 Color subTitleTextColor = Color(0xFF9F988F);
 Color hintTextColor = Color(0xFFB9B9B9);
+const Color kHintTextColor = Color(0xFFBB9B9B9);
 
 //* Device size
 double deviceWith(BuildContext context) {

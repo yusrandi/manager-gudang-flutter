@@ -1,9 +1,9 @@
-
 import 'dart:convert';
 import 'package:gudang_manager/config/api.dart';
 import 'package:gudang_manager/models/klasifikasi_model.dart';
 import 'package:gudang_manager/models/pb22_model.dart';
 import 'package:gudang_manager/models/pb23_model.dart';
+import 'package:gudang_manager/models/pemeliharaan_model.dart';
 import 'package:gudang_manager/models/penerimaan_model.dart';
 import 'package:gudang_manager/models/pengeluaran_model.dart';
 import 'package:gudang_manager/models/rekapitulasi_model.dart';
@@ -15,6 +15,10 @@ abstract class LaporanRepository {
     String semester,
     String tahun,
   );
+  Future<PemeliharaanModel> getPemeliharaan(
+    String semester,
+    String tahun,
+  );
 
   Future<PengeluaranModel> getPengeluaran(
     String spesifikasiId,
@@ -22,7 +26,7 @@ abstract class LaporanRepository {
     String semester,
     String tahun,
   );
-  
+
   Future<Pb22Model> getPb22(
     String spesifikasiId,
     String tahun,
@@ -36,18 +40,22 @@ abstract class LaporanRepository {
     String tahun,
   );
 
-
   Future<KlasifikasiModel> getKlasifikasi();
-
 }
 
 class LaporanRepositoryImpl implements LaporanRepository {
   static const TAG = "LaporanRepositoryImpl";
 
   @override
-  Future<PenerimaanModel> getPenerimaan(String spesifikasiId, String semester, String tahun) async {
-    var _response = await http.post(Uri.parse(Api.instance.penerimaanURL), body: {"spesifikasi_id": spesifikasiId, "semester": semester, "tahun": tahun});
-    print("TAG "+_response.statusCode.toString());
+  Future<PenerimaanModel> getPenerimaan(
+      String spesifikasiId, String semester, String tahun) async {
+    var _response = await http.post(Uri.parse(Api.instance.penerimaanURL),
+        body: {
+          "spesifikasi_id": spesifikasiId,
+          "semester": semester,
+          "tahun": tahun
+        });
+    print("TAG " + _response.statusCode.toString());
     if (_response.statusCode == 200) {
       // print("$TAG getLogin true ");
       var data = json.decode(_response.body);
@@ -60,10 +68,8 @@ class LaporanRepositoryImpl implements LaporanRepository {
     }
   }
 
-
-  
   @override
-  Future<KlasifikasiModel> getKlasifikasi() async{
+  Future<KlasifikasiModel> getKlasifikasi() async {
     var _response = await http.get(Uri.parse(Api.instance.klasifikasiURL));
     print(_response.statusCode);
     if (_response.statusCode == 201) {
@@ -79,9 +85,16 @@ class LaporanRepositoryImpl implements LaporanRepository {
   }
 
   @override
-  Future<PengeluaranModel> getPengeluaran(String spesifikasiId, String bagianId, String semester, String tahun) async{
-    var _response = await http.post(Uri.parse(Api.instance.pengeluaranURL), body: {"spesifikasi_id": spesifikasiId, "bagian_id": bagianId, "semester": semester, "tahun": tahun});
-    print(TAG+" getPengeluaran : "+_response.statusCode.toString());
+  Future<PengeluaranModel> getPengeluaran(String spesifikasiId, String bagianId,
+      String semester, String tahun) async {
+    var _response =
+        await http.post(Uri.parse(Api.instance.pengeluaranURL), body: {
+      "spesifikasi_id": spesifikasiId,
+      "bagian_id": bagianId,
+      "semester": semester,
+      "tahun": tahun
+    });
+    print(TAG + " getPengeluaran : " + _response.statusCode.toString());
     if (_response.statusCode == 200) {
       // print("$TAG getLogin true ");
       var data = json.decode(_response.body);
@@ -96,7 +109,8 @@ class LaporanRepositoryImpl implements LaporanRepository {
 
   @override
   Future<Pb22Model> getPb22(String spesifikasiId, String tahun) async {
-    var _response = await http.post(Uri.parse(Api.instance.pbURL), body: {"klasifikasi_id": spesifikasiId, "tahun": tahun});
+    var _response = await http.post(Uri.parse(Api.instance.pbURL),
+        body: {"klasifikasi_id": spesifikasiId, "tahun": tahun});
     // print(TAG+" getPb22 "+_response.statusCode.toString());
     if (_response.statusCode == 200) {
       // print("$TAG getLogin true ");
@@ -111,8 +125,9 @@ class LaporanRepositoryImpl implements LaporanRepository {
   }
 
   @override
-  Future<Pb23Model> getPb23(String spesifikasiId, String tahun) async{
-    var _response = await http.post(Uri.parse(Api.instance.pb23URL), body: {"klasifikasi_id": spesifikasiId, "tahun": tahun});
+  Future<Pb23Model> getPb23(String spesifikasiId, String tahun) async {
+    var _response = await http.post(Uri.parse(Api.instance.pb23URL),
+        body: {"klasifikasi_id": spesifikasiId, "tahun": tahun});
     // print(TAG+" getPb22 "+_response.statusCode.toString());
     if (_response.statusCode == 200) {
       // print("$TAG getLogin true ");
@@ -127,8 +142,10 @@ class LaporanRepositoryImpl implements LaporanRepository {
   }
 
   @override
-  Future<RekapitulasiModel> getRekapitulasi(String spesifikasiId, String tahun) async{
-    var _response = await http.post(Uri.parse(Api.instance.rekapitulasiURL), body: {"klasifikasi_id": spesifikasiId, "filterTahun": tahun});
+  Future<RekapitulasiModel> getRekapitulasi(
+      String spesifikasiId, String tahun) async {
+    var _response = await http.post(Uri.parse(Api.instance.rekapitulasiURL),
+        body: {"klasifikasi_id": spesifikasiId, "filterTahun": tahun});
     // print(TAG+" getPb22 "+_response.statusCode.toString());
     if (_response.statusCode == 200) {
       // print("$TAG getLogin true ");
@@ -142,5 +159,21 @@ class LaporanRepositoryImpl implements LaporanRepository {
     }
   }
 
-  
+  @override
+  Future<PemeliharaanModel> getPemeliharaan(
+      String semester, String tahun) async {
+    var _response = await http.post(Uri.parse(Api.instance.pemeliharaanURL),
+        body: {"semester": semester, "tahun": tahun});
+    print("TAG " + _response.statusCode.toString());
+    if (_response.statusCode == 200) {
+      // print("$TAG getLogin true ");
+      var data = json.decode(_response.body);
+      // print("Data $data");
+      PemeliharaanModel model = PemeliharaanModel.fromJson(data);
+      return model;
+    } else {
+      // print("$TAG getLogin else");
+      throw Exception();
+    }
+  }
 }
