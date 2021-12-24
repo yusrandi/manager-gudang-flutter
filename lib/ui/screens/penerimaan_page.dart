@@ -1,6 +1,7 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_html/shims/dart_ui_real.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:gudang_manager/bloc/klasifikasi_bloc/klasifikasi_bloc.dart';
 import 'package:gudang_manager/bloc/laporan_bloc/laporan_bloc.dart';
@@ -53,6 +54,9 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
     _klasifikasiBloc = BlocProvider.of<KlasifikasiBloc>(context);
 
     _klasifikasiBloc.add(FetchKlasifikasiEvent());
+
+    // _bloc.add(FetchLaporanPenerimaanEvent(
+    //     spesifikasiId: _spesifikasiId, semester: _semester, tahun: _tahun));
   }
 
   @override
@@ -63,7 +67,7 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
         spesifikasiId: _spesifikasiId, semester: _semester, tahun: _tahun));
     return Scaffold(
         appBar: AppBar(
-          brightness: Brightness.light,
+          // brightness: Brightness.light,
           elevation: 0,
           backgroundColor: AppTheme.redBackgroundColor,
           title: Container(
@@ -191,87 +195,6 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
     );
   }
 
-  Widget _laporanItemList(List<Penerimaan> penerimaans) {
-    if (penerimaans.length == 0) {
-      return Center(
-        child: Text("Laporan not Found"),
-      );
-    }
-
-    return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          child: DataTable(
-              // headingRowColor: MaterialStateColor.resolveWith((states) => Colors.red),
-              columnSpacing: 10,
-              columns: [
-                DataColumn(
-                    label: Text("NO",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("JENIS BARANG",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("TGL SPK",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("N0 SPK",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("TGL SPM",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("N0 SPM",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("BANYAKNYA",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("HARGA",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("TOTAL",
-                        style: Theme.of(context).textTheme.subtitle1)),
-                DataColumn(
-                    label: Text("KETERANGAN",
-                        style: Theme.of(context).textTheme.subtitle1)),
-              ],
-              rows: penerimaans
-                  .map((item) => DataRow(cells: [
-                        DataCell(Text(
-                            (penerimaans.indexOf(item) + 1).toString(),
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.barang!.name,
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.spkDate,
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.spkNo,
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.spmDate == null ? "" : item.spmDate,
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.spmNo == null ? "" : item.spmNo,
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.barangQty + ' ' + item.satuan!.name,
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(
-                            "Rp. " +
-                                NumberFormat("#,##0", "en_US")
-                                    .format(int.parse(item.barangPrice)),
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(
-                            "Rp. " +
-                                NumberFormat("#,##0", "en_US")
-                                    .format((int.parse(item.barangQty) *
-                                        int.parse(item.barangPrice)))
-                                    .toString(),
-                            style: Theme.of(context).textTheme.caption)),
-                        DataCell(Text(item.rekanan!.name,
-                            style: Theme.of(context).textTheme.caption)),
-                      ]))
-                  .toList()),
-        ));
-  }
-
   Container _laporanItemListNew(List<Penerimaan> penerimaans) {
     List<ItemPenerimaan> list = [];
     final groups = groupBy(penerimaans, (Penerimaan e) {
@@ -292,13 +215,13 @@ class _PenerimaanPageState extends State<PenerimaanPage> {
 
       value.forEach((e) {
         key = e.spkNo;
-        spkDate = e.spmDate;
-        spkNo = e.spkDate;
+        spkDate = e.spkDate;
+        spkNo = e.spkNo;
         spmDate = e.spmDate;
         spmNo = e.spmNo;
         vendor = e.rekanan!.name;
         keterangan = "";
-        subTotal += int.parse(e.barangPrice);
+        subTotal += int.parse(e.barangPrice) * int.parse(e.barangQty);
       });
       data = value;
 
@@ -613,17 +536,71 @@ class CardExpand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    buildItem(String label) {
+    print(data.spkNo);
+    buildItem(Penerimaan p) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Text(data.key),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                    flex: 2,
+                    child: Text("Jenis Barang",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 1,
+                    child: Text("Jumlah Barang",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 1,
+                    child: Text("Harga Barang",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold))),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                    flex: 2,
+                    child: Text(p.barang!.name,
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 1,
+                    child: Text("${p.barangQty} ${p.satuan!.name}",
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 1,
+                    child: Text(
+                        "Rp. " +
+                            NumberFormat("#,##0", "en_US")
+                                .format(int.parse(p.barangPrice)),
+                        style: TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.bold))),
+              ],
+            ),
+            SizedBox(height: 16),
+            Text(
+                "Rp. " +
+                    NumberFormat("#,##0", "en_US").format(
+                        int.parse(p.barangPrice) * int.parse(p.barangQty)),
+                textAlign: TextAlign.end,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Divider(),
+          ],
+        ),
       );
     }
 
     buildList() {
       return Column(
         children: <Widget>[
-          for (var i in data.data) buildItem("Item ${i.barang!.name}"),
+          for (var i in data.data) buildItem(i),
         ],
       );
     }
@@ -642,42 +619,98 @@ class CardExpand extends StatelessWidget {
                 hasIcon: false,
               ),
               header: Container(
-                color: Colors.indigoAccent,
                 child: Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          ExpandableIcon(
-                            theme: const ExpandableThemeData(
-                              expandIcon: Icons.arrow_right,
-                              collapseIcon: Icons.arrow_drop_down,
-                              iconColor: Colors.white,
-                              iconSize: 28.0,
-                              iconRotationAngle: math.pi / 2,
-                              iconPadding: EdgeInsets.only(right: 5),
-                              hasIcon: false,
-                            ),
+                          Expanded(child: Container()),
+                          Container(
+                            width: 80,
+                            child: Text("Tanggal", textAlign: TextAlign.end),
                           ),
-                          Expanded(
-                            child: Text(
-                              "Items ${data.key}",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyText1!
-                                  .copyWith(color: Colors.white),
-                            ),
+                          SizedBox(width: 16),
+                          Container(
+                            width: 100,
+                            child: Text("Nomor", textAlign: TextAlign.end),
                           ),
                         ],
                       ),
-                      Text(
-                        "Items ${data.subTotal}",
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyText1!
-                            .copyWith(color: Colors.white),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Expanded(child: Text("SPK/Perjanjian/Kontrak")),
+                          Container(
+                            width: 80,
+                            child: Text(data.spkDate,
+                                textAlign: TextAlign.end,
+                                style: TextStyle(color: Colors.black54)),
+                          ),
+                          SizedBox(width: 16),
+                          Container(
+                            width: 100,
+                            child: Text(data.spkNo,
+                                textAlign: TextAlign.end,
+                                style: TextStyle(color: Colors.black54)),
+                          ),
+                        ],
                       ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Expanded(child: Text("DPA/SPM/Kwitansi")),
+                          Container(
+                            width: 80,
+                            child: Text(
+                                data.spmDate != null ? data.spmDate : '-',
+                                textAlign: TextAlign.end,
+                                style: TextStyle(color: Colors.black54)),
+                          ),
+                          SizedBox(width: 16),
+                          Container(
+                            width: 100,
+                            child: Text(data.spmNo != null ? data.spmNo : '-',
+                                textAlign: TextAlign.end,
+                                style: TextStyle(color: Colors.black54)),
+                          ),
+                        ],
+                      ),
+                      Divider(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Vendor"),
+                          Text(data.vendor,
+                              style: TextStyle(color: Colors.black54)),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Keterangan"),
+                          Text("-", style: TextStyle(color: Colors.black54)),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Sub Total"),
+                          Text(
+                              "Rp. " +
+                                  NumberFormat("#,##0", "en_US")
+                                      .format(data.subTotal),
+                              style: TextStyle(color: Colors.black54)),
+                        ],
+                      ),
+                      Divider(),
                     ],
                   ),
                 ),
@@ -689,6 +722,29 @@ class CardExpand extends StatelessWidget {
         ),
       ),
     ));
+  }
+
+  Container listContainer(
+      BuildContext context, double width, String title, String value) {
+    return Container(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$title",
+            style: Theme.of(context)
+                .textTheme
+                .bodyText1!
+                .copyWith(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            "$value",
+            style: TextStyle(fontSize: 10),
+          ),
+        ],
+      ),
+    );
   }
 }
 

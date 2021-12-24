@@ -248,10 +248,16 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
                   label:
                       Text("NO", style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
+                  label: Text("Nama Barang",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("No / Tgl Kontrak",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
                   label: Text("No Surat / Nota",
                       style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
-                  label: Text("Nama Barang",
+                  label: Text("Tanggal",
                       style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
                   label: Text("Jumlah",
@@ -260,7 +266,7 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
                   label: Text("Harga",
                       style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
-                  label: Text("Total",
+                  label: Text("Jumlah Barang",
                       style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
                   label: Text("Penerima",
@@ -273,9 +279,14 @@ class _PengeluaranPageState extends State<PengeluaranPage> {
                 .map((e) => DataRow(cells: [
                       DataCell(Text((list.indexOf(e) + 1).toString(),
                           style: Theme.of(context).textTheme.caption)),
+                      DataCell(Text(e.penerimaan!.barang!.name,
+                          style: Theme.of(context).textTheme.caption)),
+                      DataCell(Text(
+                          "${e.penerimaan!.spkNo} / ${e.penerimaan!.spkDate}",
+                          style: Theme.of(context).textTheme.caption)),
                       DataCell(Text(e.notaNo,
                           style: Theme.of(context).textTheme.caption)),
-                      DataCell(Text(e.penerimaan!.barang!.name,
+                      DataCell(Text(e.date,
                           style: Theme.of(context).textTheme.caption)),
                       DataCell(Text(
                           e.penerimaan!.barangQty +

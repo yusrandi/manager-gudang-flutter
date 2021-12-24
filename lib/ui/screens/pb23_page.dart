@@ -47,6 +47,9 @@ class _Pb23PageState extends State<Pb23Page> {
   List<ItemModel> listKlasifikasi = [];
   List<Pb23> list = [];
 
+  int resBarangId = 0;
+  int resSisa = 0;
+
   @override
   void initState() {
     super.initState();
@@ -226,10 +229,13 @@ class _Pb23PageState extends State<Pb23Page> {
                   label: Text("Jenis Barang",
                       style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
-                  label: Text("Barang Masuk",
+                  label: Text("Satuan Barang",
                       style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
-                  label: Text("Barang Keluar",
+                  label: Text("Masuk",
+                      style: Theme.of(context).textTheme.subtitle1)),
+              DataColumn(
+                  label: Text("Keluar",
                       style: Theme.of(context).textTheme.subtitle1)),
               DataColumn(
                   label: Text("Sisa",
@@ -253,6 +259,8 @@ class _Pb23PageState extends State<Pb23Page> {
                         style: Theme.of(context).textTheme.caption)),
                     DataCell(Text(e.penerimaan!.barang!.name,
                         style: Theme.of(context).textTheme.caption)),
+                    DataCell(Text(e.penerimaan!.satuan!.name,
+                        style: Theme.of(context).textTheme.caption)),
                     DataCell(Text(
                         e.status == 1
                             ? e.qty + ' ' + e.penerimaan!.satuan!.name
@@ -263,7 +271,10 @@ class _Pb23PageState extends State<Pb23Page> {
                             ? '0'
                             : e.qty + ' ' + e.penerimaan!.satuan!.name,
                         style: Theme.of(context).textTheme.caption)),
-                    DataCell(Text(e.sisa + ' ' + e.penerimaan!.satuan!.name,
+                    DataCell(Text(
+                        getSisa(e.sisa, e.barangId, e.status, e.qty) +
+                            ' ' +
+                            e.penerimaan!.satuan!.name,
                         style: Theme.of(context).textTheme.caption)),
                     DataCell(Text(
                         "Rp. " +
@@ -295,6 +306,25 @@ class _Pb23PageState extends State<Pb23Page> {
                 .toList()),
       ),
     );
+  }
+
+  String getSisa(String sisa, int barangId, int status, String qty) {
+    var nsisa = int.parse(sisa);
+    var nQty = int.parse(qty);
+
+    if (resBarangId == barangId) {
+      if (status == 1) {
+        resSisa += nQty;
+      } else {
+        resSisa -= nQty;
+      }
+    } else {
+      resSisa = nQty;
+    }
+
+    resBarangId = barangId;
+
+    return resSisa.toString();
   }
 
   Container loadListBarang(List<Barang> list) {

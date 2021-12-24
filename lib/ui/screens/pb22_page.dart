@@ -208,7 +208,7 @@ class _Pb22PageState extends State<Pb22Page> {
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
-          columnSpacing: 10,
+          columnSpacing: 15,
           columns: [
             DataColumn(
                 label:
@@ -220,10 +220,13 @@ class _Pb22PageState extends State<Pb22Page> {
                 label: Text("Jenis Barang",
                     style: Theme.of(context).textTheme.subtitle1)),
             DataColumn(
-                label: Text("Barang Masuk",
+                label: Text("Satuan Barang",
                     style: Theme.of(context).textTheme.subtitle1)),
             DataColumn(
-                label: Text("Barang Keluar",
+                label: Text("Masuk",
+                    style: Theme.of(context).textTheme.subtitle1)),
+            DataColumn(
+                label: Text("Keluar",
                     style: Theme.of(context).textTheme.subtitle1)),
             DataColumn(
                 label:
@@ -237,6 +240,8 @@ class _Pb22PageState extends State<Pb22Page> {
                   DataCell(
                       Text(e.date, style: Theme.of(context).textTheme.caption)),
                   DataCell(Text(e.penerimaan!.barang!.name,
+                      style: Theme.of(context).textTheme.caption)),
+                  DataCell(Text(e.penerimaan!.satuan!.name,
                       style: Theme.of(context).textTheme.caption)),
                   DataCell(Text(
                       e.status == 1
